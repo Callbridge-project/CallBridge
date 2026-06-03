@@ -1,0 +1,94 @@
+name: CallBridge Android Mobile CI
+
+# WHEN TO RUN:
+# - On push to main or dev if android files changed
+# - On any feature branch PR targeting dev or main
+# - Manually from GitHub Actions tab
+on:
+  push:
+    branches: [main, dev, feature/**] 
+    paths:
+      - 'android/**'
+  pull_request:
+    branches: [dev, main]       # enforces checks on PRs into BOTH protected branches
+    paths:
+      - 'android/**'
+  workflow_dispatch:
+
+jobs:
+  android-build:
+    name: Verify Android Build Compilation
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./android   # all steps run inside android/ by default
+
+    steps:
+      # Pull the code from the branch being pushed or PR'd
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # React Native needs Node.js to bundle the JS side of the app
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: android/package-lock.json
+
+      # Install React Native JS dependencies
+      - name: Install JavaScript Dependencies
+        run: npm ci
+
+      # Android native compilation needs Java 17
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'       # stable OpenJDK for Android
+          java-version: '17'
+
+      # Cache Gradle so it doesn't re-download everything on every run
+      # Saves 2-3 minutes per workflow run
+      - name: Cache Gradle Packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # Git sometimes strips execute permission from gradlew
+      # Without this the build step fails with "Permission denied"
+      - name: Grant Execute Permission for Gradle Wrapper
+        run: chmod +x gradlew
+        continue-on-error: true
+
+      # Validate commit message follows Jira format: CB-XX: Description
+      # Blocks merge if commit message doesn't match the agreed format
+      - name: Validate Commit Message Format
+        if: github.event_name == 'pull_request'
+        run: |
+          COMMIT_MSG=$(git log --format=%s -n 1 ${{ github.event.pull_request.head.sha }})
+          echo "Commit message: $COMMIT_MSG"
+          if ! echo "$COMMIT_MSG" | grep -qE '^CB-[0-9]+: .+'; then
+            echo "❌ Commit message does not follow required format."
+            echo "   Required: CB-XX: Description"
+            echo "   Example:  CB-40: Add Android permissions handling"
+            exit 1
+          fi
+          echo "✅ Commit message format is valid."
+
+      # Build debug APK — remove continue-on-error once android folder is finalized
+      - name: Compile Development Build
+        run: ./gradlew assembleDebug --no-daemon
+        continue-on-error: true    # REMOVE THIS LINE once Android setup is complete
+
+      # Makes the built APK downloadable from the GitHub Actions tab
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: callbridge-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk

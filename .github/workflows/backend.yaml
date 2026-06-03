@@ -1,0 +1,63 @@
+name: CallBridge Appwrite Backend CI
+
+# WHEN TO RUN:
+# - On push to main or dev if backend or appwrite config changed
+# - On any feature branch PR targeting dev or main
+# - Manually from GitHub Actions tab
+on:
+  push:
+    branches: [main, dev, feature/**] 
+    paths:
+      - 'backend/**'
+      - 'appwrite.json'           # root level — do not move this file
+  pull_request:
+    branches: [dev, main]         # enforces checks on PRs into BOTH protected branches
+    paths:
+      - 'backend/**'
+      - 'appwrite.json'
+  workflow_dispatch:
+
+
+jobs:
+  validate-schema:
+    name: Validate Appwrite Configuration Schema
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Validate commit message follows Jira format: CB-XX: Description
+      - name: Validate Commit Message Format
+        if: github.event_name == 'pull_request'
+        run: |
+          COMMIT_MSG=$(git log --format=%s -n 1 ${{ github.event.pull_request.head.sha }})
+          echo "Commit message: $COMMIT_MSG"
+          if ! echo "$COMMIT_MSG" | grep -qE '^CB-[0-9]+: .+'; then
+            echo "  Commit message does not follow required format."
+            echo "  Required: CB-XX: Description"
+            echo "  Example:  CB-35: Implement SMS synchronization"
+            exit 1
+          fi
+          echo "  Commit message format is valid."
+
+      # jq is a JSON parser — checks appwrite.json is not broken/corrupted
+      # If appwrite.json is malformed the entire backend is broken before you even start
+      - name: Verify Appwrite JSON Schema Integrity
+        run: |
+          if [ -f "appwrite.json" ]; then
+            cat appwrite.json | jq .
+            echo " appwrite.json is syntactically valid."
+          else
+            echo " No appwrite.json found at project root. Skipping check."
+          fi
+
+      # If backend has any Cloud Functions, validate their structure exists
+      - name: Check Backend Folder Structure
+        run: |
+          if [ -d "backend" ]; then
+            echo " Backend directory found."
+            ls -la backend/
+          else
+            echo " No backend directory found. Skipping."
+          fi
