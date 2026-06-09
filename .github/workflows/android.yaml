@@ -29,17 +29,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # React Native needs Node.js to bundle the JS side of the app
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: android/package-lock.json
-
-      # Install React Native JS dependencies
-      - name: Install JavaScript Dependencies
-        run: npm ci
+   
 
       # Android native compilation needs Java 17
       - name: Set up JDK 17
@@ -73,10 +63,10 @@ jobs:
         run: |
           COMMIT_MSG=$(git log --format=%s -n 1 ${{ github.event.pull_request.head.sha }})
           echo "Commit message: $COMMIT_MSG"
-          if ! echo "$COMMIT_MSG" | grep -qE '^CB-[0-9]+: .+'; then
+          if ! echo "$COMMIT_MSG" | grep -qE '^CMP-[0-9]+: .+'; then
             echo "❌ Commit message does not follow required format."
-            echo "   Required: CB-XX: Description"
-            echo "   Example:  CB-40: Add Android permissions handling"
+            echo "   Required: CMP-XX: Description"
+            echo "   Example:  CMP-40: Add Android permissions handling"
             exit 1
           fi
           echo "✅ Commit message format is valid."
