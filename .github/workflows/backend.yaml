@@ -33,10 +33,10 @@ jobs:
         run: |
           COMMIT_MSG=$(git log --format=%s -n 1 ${{ github.event.pull_request.head.sha }})
           echo "Commit message: $COMMIT_MSG"
-          if ! echo "$COMMIT_MSG" | grep -qE '^CB-[0-9]+: .+'; then
+          if ! echo "$COMMIT_MSG" | grep -qE '^CMP-[0-9]+: .+'; then
             echo "  Commit message does not follow required format."
-            echo "  Required: CB-XX: Description"
-            echo "  Example:  CB-35: Implement SMS synchronization"
+            echo "  Required: CMP-XX: Description"
+            echo "  Example:  CMP-35: Implement SMS synchronization"
             exit 1
           fi
           echo "  Commit message format is valid."
