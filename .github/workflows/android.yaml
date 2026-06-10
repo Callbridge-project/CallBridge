@@ -65,6 +65,7 @@ jobs:
         run: chmod +x gradlew
         continue-on-error: true
 
+      
       # Build debug APK — remove continue-on-error once android folder is finalized
       - name: Compile Development Build
         run: ./gradlew assembleDebug --no-daemon

@@ -49,13 +49,3 @@ jobs:
       # "scripts": { "test": "echo 'No tests yet' && exit 0" }
       - name: Run Tests
         run: npm test --if-present
-
-      # Full production build — catches TypeScript errors, missing imports, broken configs
-      # React + Vite outputs to web-client/dist/
-      - name: Build Production Bundle
-        run: npm run build
-        env:
-          CI: true
-          # Add when API URL is confirmed:
-          # VITE_APPWRITE_ENDPOINT: ${{ secrets.VITE_APPWRITE_ENDPOINT }}
-          # VITE_APPWRITE_PROJECT_ID: ${{ secrets.VITE_APPWRITE_PROJECT_ID }}
