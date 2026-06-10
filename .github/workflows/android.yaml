@@ -28,15 +28,7 @@ jobs:
       # Pull the code from the branch being pushed or PR'd
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # Repair Git repository to fix corruption issues
-      - name: Repair Git Repository
-        run: |
-          git reflog expire --expire=now --all || true
-          git gc --prune=now || true
-          git fetch --all --force || true
+   
 
       # Android native compilation needs Java 17
       - name: Set up JDK 17
@@ -63,7 +55,7 @@ jobs:
         run: chmod +x gradlew
         continue-on-error: true
 
-      # Validate commit message follows Jira format: CMP-XX: Description
+      # Validate commit message follows Jira format: CB-XX: Description
       # Blocks merge if commit message doesn't match the agreed format
       - name: Validate Commit Message Format
         if: github.event_name == 'pull_request'
