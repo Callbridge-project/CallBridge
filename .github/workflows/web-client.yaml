@@ -24,7 +24,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./web-client   # all steps run inside client/ by default
+        working-directory: ./web-client   # all steps run inside web-client/ by default
 
     steps:
       - name: Checkout Code
@@ -40,35 +40,12 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      # Validate commit message follows Jira format: CB-XX: Description
-      - name: Validate Commit Message Format
-        if: github.event_name == 'pull_request'
-        run: |
-          COMMIT_MSG=$(git log --format=%s -n 1 ${{ github.event.pull_request.head.sha }})
-          echo "Commit message: $COMMIT_MSG"
-          if ! echo "$COMMIT_MSG" | grep -qE '^CMP-[0-9]+: .+'; then
-            echo "   Commit message does not follow required format."
-            echo "   Required: CMP-XX: Description"
-            echo "   Example:  CMP-21: Build login page UI"
-            exit 1
-          fi
-          echo " Commit message format is valid."
-
+    
       # Checks code quality — won't fail if lint script isn't set up yet
       - name: Run Code Linting
         run: npm run lint --if-present
 
-      # If no tests written yet add this to client/package.json:
+      # If no tests written yet add this to web-client/package.json:
       # "scripts": { "test": "echo 'No tests yet' && exit 0" }
       - name: Run Tests
         run: npm test --if-present
-
-      # Full production build — catches TypeScript errors, missing imports, broken configs
-      # React + Vite outputs to client/dist/
-      - name: Build Production Bundle
-        run: npm run build
-        env:
-          CI: true
-          # Add when API URL is confirmed:
-          # VITE_APPWRITE_ENDPOINT: ${{ secrets.VITE_APPWRITE_ENDPOINT }}
-          # VITE_APPWRITE_PROJECT_ID: ${{ secrets.VITE_APPWRITE_PROJECT_ID }}

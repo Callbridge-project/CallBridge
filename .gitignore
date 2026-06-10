@@ -1,0 +1,60 @@
+# ─── ANDROID ───────────────────────────────────────────
+android/.idea/
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+android/*.iml
+android/**/*.iml
+android/local.properties
+android/.externalNativeBuild/
+android/.cxx/
+android/*.apk
+android/*.aab
+android/*.aar
+android/gradlew.bat
+
+# ─── REACT / WEB DASHBOARD ─────────────────────────────
+web-dashboard/node_modules/
+web-dashboard/.env
+web-dashboard/.env.local
+web-dashboard/.env.development.local
+web-dashboard/.env.test.local
+web-dashboard/.env.production.local
+web-dashboard/build/
+web-dashboard/dist/
+web-dashboard/dist-ssr/
+
+# ─── LOGS ──────────────────────────────────────────────
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ─── SECURITY — NEVER COMMIT THESE ────────────────────
+*.keystore
+*.jks
+*.p12
+*.p8
+secrets.properties
+local.properties
+*.local
+
+# ─── OS FILES ──────────────────────────────────────────
+.DS_Store
+.DS_Store?
+Thumbs.db
+*.suo
+*.sw?
+
+# ─── EDITOR ────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+*.ntvs*
+*.njsproj
+*.sln
