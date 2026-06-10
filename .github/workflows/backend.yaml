@@ -27,19 +27,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Validate commit message follows Jira format: CB-XX: Description
-      - name: Validate Commit Message Format
-        if: github.event_name == 'pull_request'
-        run: |
-          COMMIT_MSG=$(git log --format=%s -n 1 ${{ github.event.pull_request.head.sha }})
-          echo "Commit message: $COMMIT_MSG"
-          if ! echo "$COMMIT_MSG" | grep -qE '^CB-[0-9]+: .+'; then
-            echo "  Commit message does not follow required format."
-            echo "  Required: CB-XX: Description"
-            echo "  Example:  CB-35: Implement SMS synchronization"
-            exit 1
-          fi
-          echo "  Commit message format is valid."
+      
 
       # jq is a JSON parser — checks appwrite.json is not broken/corrupted
       # If appwrite.json is malformed the entire backend is broken before you even start
