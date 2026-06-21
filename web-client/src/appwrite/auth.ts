@@ -1,5 +1,6 @@
-import { Account, ID } from 'appwrite';
+import { Account, ID, Permission, Role } from 'appwrite';
 import type { Models } from 'appwrite';
+import { databases } from './config';
 import client from './config';
 
 const account = new Account(client);
@@ -17,6 +18,24 @@ export const signUp = async (
             password,
             fullName
         );
+
+        await databases.createDocument(
+    import.meta.env.VITE_APPWRITE_DATABASE_ID,
+    import.meta.env.VITE_APPWRITE_USERS_COLLECTION_ID,
+    user.$id,
+    {
+        user_id: user.$id,
+        full_name: fullName,
+        email: email,
+        created_at: new Date().toISOString()
+    },
+    [
+        Permission.read(Role.user(user.$id)),
+        Permission.update(Role.user(user.$id)),
+        Permission.delete(Role.user(user.$id)),
+    ]
+);
+
         return { success: true, data: user };
     } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'An error occurred';

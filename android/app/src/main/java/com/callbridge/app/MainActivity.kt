@@ -17,8 +17,22 @@ import com.callbridge.app.ui.theme.CallBridgeTheme
 import io.appwrite.exceptions.AppwriteException
 import kotlinx.coroutines.launch
 
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        lifecycleScope.launch {
+            val signUpResult = AuthService.signUp("Test User", "testuser2@callbridge.com", "Password123!")
+            println("Sign Up Result: $signUpResult")
+
+            val loginResult = AuthService.login("testuser2@callbridge.com", "Password123!")
+            println("Login Result: $loginResult")
+
+            val currentUser = AuthService.getCurrentUser()
+            println("Current User: $currentUser")
+
+            val logoutResult = AuthService.logout()
+            println("Logout Result: $logoutResult")
+        }
         AppwriteClient.initialize(applicationContext)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
