@@ -6,7 +6,8 @@ import io.appwrite.ID
 
 object AuthService {
 
-    private val account = Account(AppwriteClient.client)
+    private val account: Account
+        get() = AppwriteClient.account
 
     // SIGN UP — creates a new user account
     suspend fun signUp(
