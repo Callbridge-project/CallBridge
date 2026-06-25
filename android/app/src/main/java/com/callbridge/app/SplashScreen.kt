@@ -62,9 +62,9 @@ fun SplashScreen(onSplashFinished: () -> Unit) {
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF999999), // white
-                        Color(0xFFFFFFFF), // blue
-                        Color(0xFF999999)  // near black
+                        Color(0xFF999999), // gray
+                        Color(0xFFFFFFFF), // white
+                        Color(0xFF999999)  // gray
                     )
                 )
             ),

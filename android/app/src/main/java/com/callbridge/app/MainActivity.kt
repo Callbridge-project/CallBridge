@@ -22,10 +22,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             CallBridgeTheme {
-                SplashScreen(onSplashFinished = {
-                    // Later this will navigate to the Login screen
-                    // For now we leave it empty to just test the splash visually
-                })
+                AppNavigation()
             }
         }
     }
