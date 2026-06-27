@@ -1,0 +1,17 @@
+/* Signup.module.css - Styles for Signup page layout isolation */
+.authPage {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.authHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 6%;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+}
