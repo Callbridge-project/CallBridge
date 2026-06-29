@@ -2,11 +2,127 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/images/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>web-dashboard</title>
+    
+    <!-- Google Fonts - Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    
+    <title>CallBridge | Secure Real-Time Call, SMS & Android Device Monitoring Dashboard</title>
+    
+    <!-- Core SEO Meta Tags -->
+    <meta name="description" content="Monitor call logs, SMS activity, and Android device status securely in real time. CallBridge is a unified command center providing encrypted, low-latency device synchronization." />
+    <meta name="keywords" content="CallBridge, call monitoring, SMS synchronization, Android device sync, real-time logs, secure device management, remote call tracker, SMS command center" />
+    <meta name="author" content="CallBridge" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://callbridge.io" />
+
+    <!-- Open Graph (Social SEO) -->
+    <meta property="og:title" content="CallBridge | Secure Android Call & SMS Sync Dashboard" />
+    <meta property="og:description" content="Monitor call logs, SMS messages, and Android device statuses securely in real time from any web browser." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://callbridge.io" />
+    <meta property="og:image" content="https://callbridge.io/images/logo.png" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CallBridge | Secure Android Call & SMS Sync Dashboard" />
+    <meta name="twitter:description" content="Real-time, encrypted call logs and SMS synchronization from your connected Android devices." />
+
+    <!-- Structured Data (Organization Schema) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "CallBridge",
+      "url": "https://callbridge.io",
+      "logo": "https://callbridge.io/images/logo.png",
+      "description": "CallBridge provides a unified, secure dashboard for synchronizing and monitoring call logs, SMS messages, and device statuses from Android devices in real time.",
+      "knowsAbout": [
+        "Real-Time Device Synchronization",
+        "Encrypted Logging",
+        "SMS Monitoring Systems",
+        "Remote Call Tracking",
+        "Secure Android Dashboards"
+      ]
+    }
+    </script>
+
+    <!-- Product Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "CallBridge Command Center",
+      "brand": {
+        "@type": "Brand",
+        "name": "CallBridge"
+      },
+      "description": "A secure, low-latency dashboard enabling real-time monitoring and synchronization of Android call logs, SMS activity, and device statuses.",
+      "category": "Communication Software",
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+      }
+    }
+    </script>
+
+    <!-- FAQ Schema (AEO) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is CallBridge?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "CallBridge is a secure web dashboard that synchronizes and displays call logs, SMS messages, and device statuses from connected Android devices in real time."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is CallBridge secure?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. CallBridge uses encrypted communication tunnels, secure token authentication, and secure databases to protect your synchronized logs and device data."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does CallBridge sync data?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A lightweight companion application installed on your Android device securely transmits call events and SMS logs to your CallBridge command center in real time."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
+    <!-- AEO Hidden Content Strategy for Web Crawlers -->
+    <div style="display:none;" aria-hidden="true">
+      <section>
+        <h1>CallBridge – Secure Android Call & SMS Sync Dashboard</h1>
+        <p>CallBridge provides a unified command center that enables individuals and organizations to monitor device statuses, call logs, and SMS activity in one secure place.</p>
+        <h2>Core Features</h2>
+        <ul>
+          <li>Real-Time Call Logging – Incoming, outgoing, and missed call synchronization.</li>
+          <li>Instant SMS Sync – Real-time message transmission and read status tracking.</li>
+          <li>Multi-Device Monitoring – Track battery level, network connection, and synchronization health.</li>
+          <li>Push Notifications – Receive alerts for SMS and call activity even when the tab is not in focus.</li>
+        </ul>
+        <h2>Who We Serve</h2>
+        <p>Professionals, remote teams, and device administrators seeking secure, low-latency Android log synchronization.</p>
+        <p>CallBridge is a modern software platform providing encrypted communication tunnels and real-time monitoring interfaces for linked Android devices.</p>
+      </section>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
