@@ -26,6 +26,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import android.content.Context
+import android.content.Intent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -61,6 +64,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
 
     // scope lets us run suspend functions like AuthService.login from a button click
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     // Color constants matching your design system
     val primaryBlue = Color(0xFF4A90D9)
@@ -69,6 +73,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
     val mutedText = Color(0xFF6B7A99)
     val lightGray = Color(0xFFF5F7FA)
     val cardBorder = Color(0xFFE0E7F0)
+    val white = Color(0xFFFFFFFF)
 
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -157,11 +162,11 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = cardBorder,
                     focusedBorderColor = primaryBlue,
-
+                    unfocusedContainerColor = lightGray,
                     focusedContainerColor = lightGray
                 )
             )
@@ -211,11 +216,11 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     PasswordVisualTransformation(),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = cardBorder,
                     focusedBorderColor = primaryBlue,
-
+                    unfocusedContainerColor = lightGray,
                     focusedContainerColor = lightGray
                 )
             )
@@ -282,7 +287,21 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                         isLoading = false
 
                         if (result.isSuccess) {
-                            onLoginSuccess()  // navigate to dashboard
+                            // Get the user ID and store it locally
+                            val userResult = AuthService.getCurrentUser()
+                            if (userResult.isSuccess) {
+                                val userId = userResult.getOrNull()?.id ?: ""
+                                // Store in SharedPreferences so the background service can access it
+                                val prefs = context.getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
+                                prefs.edit().putString("current_user_id", userId).apply()
+                            }
+
+                            // Start the monitoring service
+                            val serviceIntent =
+                                Intent(context, CallBridgeMonitoringService::class.java)
+                            context.startForegroundService(serviceIntent)
+
+                            onLoginSuccess()
                         } else {
                             errorMessage = "Invalid email or password. Please try again."
                         }
@@ -385,7 +404,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     fontSize = 14.sp,
                     color = mutedText
                 )
-                val context = androidx.compose.ui.platform.LocalContext.current
+                val contextView = LocalContext.current
 
                 Text(
                     text = "Sign up",
@@ -393,11 +412,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                     color = primaryBlue,
                     modifier = Modifier.clickable {
-                        val intent = android.content.Intent(
-                            android.content.Intent.ACTION_VIEW,
-//                            android.net.Uri.parse("https://your-callbridge-web-url.vercel.app/signup")
-                        )
-                        context.startActivity(intent)
+                        // TODO: Open web signup after deployment
                     }
                 )
             }
