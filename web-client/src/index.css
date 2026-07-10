@@ -1,111 +1,217 @@
-/* :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+@font-face {
+  font-family: 'Liberation Serif';
+  src: url('./assets/fonts/LiberationSerif.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
+@font-face {
+  font-family: 'Liberation Serif';
+  src: url('./assets/fonts/LiberationSerif.woff2') format('woff2');
   font-weight: 500;
-  color: var(--text-h);
+  font-style: normal;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+@font-face {
+  font-family: 'Liberation Serif';
+  src: url('./assets/fonts/LiberationSerif.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Liberation Serif';
+  src: url('./assets/fonts/LiberationSerif.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Liberation Sans';
+  src: url('./assets/fonts/LiberationSans.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Liberation Sans';
+  src: url('./assets/fonts/LiberationSans.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Liberation Sans';
+  src: url('./assets/fonts/LiberationSans.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Liberation Sans';
+  src: url('./assets/fonts/LiberationSans.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 218 11% 29%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 205 100% 32%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 215 20% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 215 20% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 215 20% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 205 100% 32%;
+    --radius: 0.5rem;
+
+    /* Global Design Tokens for Sidebar & User Card */
+    --user-card-bg: 250 100% 97.5%;
+    --user-card-border: 250 100% 95%;
+    --user-avatar-bg: 215 100% 82%;
+    --user-avatar-text: 215 100% 34%;
+    --logout-btn-border: 0 100% 96%;
+    --logout-btn-text: 356 85% 42%;
+
+    /* Page Background Gradient Stops */
+    --page-gradient-start: #FFFFFF;
+    --page-gradient-middle: #F5F7FA;
+    --page-gradient-end: #E3E0F8;
+
+    /* Banner Gradient Stops */
+    --banner-gradient-start: #005EA1;
+    --banner-gradient-end: #4A90D9;
+
+    /* Dashboard specific design tokens (RGB space-separated) */
+    --dashboard-muted: 107 122 153;
+    --dashboard-card-text: 26 26 43;
+    --dashboard-unread: 59 130 246;
+
+    /* Global border color token (RGB space-separated) */
+    --global-border: 193 199 210;
+
+    /* Dashboard specific border color (RGB space-separated) */
+    --dashboard-border: 224 231 240;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+
+/* ── Top loader bar animation ────────────────────────────────────────────── */
+@keyframes cb-loader-slide {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.cb-loader-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  z-index: 9999;
+  background: linear-gradient(90deg, #3b82f6 0%, #6366f1 50%, #3b82f6 100%);
+  background-size: 200% 100%;
+  animation: cb-loader-slide 1.4s ease-in-out infinite;
+  transform-origin: left;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
-} */
+/* Reusable global page background gradient utility */
+.bg-page-gradient {
+  background: linear-gradient(180deg, var(--page-gradient-start) 0%, var(--page-gradient-middle) 50%, var(--page-gradient-end) 100%);
+}
+
+/* Reusable global active device monitoring banner gradient utility */
+.bg-banner-gradient {
+  background: linear-gradient(90deg, var(--banner-gradient-start) 0%, var(--banner-gradient-end) 100%);
+}
+
+/* Login Page Footer Background */
+.bg-login-footer {
+  background-color: #21304C;
+}
+
+/* Premium Blue Shadow (Figma specification) */
+.shadow-badge-blue {
+  box-shadow: 0 8px 32px 0 rgba(0, 94, 161, 0.05);
+}
+
+/* Button Gradient (Figma specification) */
+.bg-btn-primary-gradient {
+  background: linear-gradient(-90deg, #005EA1 0%, #21304C 100%);
+}
+
+/* Button Shadow (Figma specification) */
+.shadow-btn-primary {
+  box-shadow: 0 4px 6px -4px rgba(0, 94, 161, 0.20), 0 10px 15px -3px rgba(0, 94, 161, 0.20);
+}
+
+/* Marketing Page Footer Styles (Figma Specifications) */
+.bg-marketing-footer {
+  background-color: #0A0A1A;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2));
+}
+
+.text-marketing-footer-item {
+  color: #C1C7D2;
+  font-weight: 400;
+}
+
+.text-marketing-footer-header {
+  color: #F9F9FF;
+  font-weight: 600;
+}
+
+.bg-footer-btn-gradient {
+  background: linear-gradient(90deg, #1A3A6B 0%, #4A90D9 100%);
+}
+
+.border-marketing-footer-divider {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Global Marketing Page Typography */
+.text-marketing-dark {
+  color: #0A0A1A;
+}
+
+.text-marketing-light {
+  color: #414751;
+}
+
+/* Prevent main page scrolling when a modal overlay is active */
+body[style*="overflow: hidden"] main {
+  overflow: hidden !important;
+}
+
+/* Figma specification radial gradient background for Auth pages */
+.bg-auth-radial {
+  background: radial-gradient(circle, #ffffff 0%, #e8eeffa0 100%);
+}
