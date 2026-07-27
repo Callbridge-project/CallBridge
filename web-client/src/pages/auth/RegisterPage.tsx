@@ -120,36 +120,27 @@ export default function RegisterPage() {
 
     try {
       // ── Appwrite account registration ────────────────────────
-      const isMockMode = import.meta.env.VITE_USE_MOCK_DATA === "true";
-      
-      if (isMockMode) {
-        // Simulate registration delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      } else {
-        // Real Appwrite account creation
-        const { account, databases, APPWRITE_DATABASE_ID, USERS_COLLECTION_ID } = await import("@/lib/appwrite");
-        const { ID, Permission, Role } = await import("appwrite");
-        const user = await account.create(ID.unique(), email, password, name);
+     const { account, databases, APPWRITE_DATABASE_ID, USERS_COLLECTION_ID } = await import("@/lib/appwrite");
+const { ID, Permission, Role } = await import("appwrite");
 
-        // Create user document in the database
-        await databases.createDocument(
-          APPWRITE_DATABASE_ID,
-          USERS_COLLECTION_ID,
-          user.$id,
-          {
-            user_id: user.$id,
-            full_name: name,
-            email: email,
-            created_at: new Date().toISOString()
-          },
-          [
-            Permission.read(Role.user(user.$id)),
-            Permission.update(Role.user(user.$id)),
-            Permission.delete(Role.user(user.$id)),
-          ]
-        );
-      }
+const user = await account.create(ID.unique(), email, password, name);
 
+await databases.createDocument(
+    APPWRITE_DATABASE_ID,
+    USERS_COLLECTION_ID,
+    user.$id,
+    {
+        user_id: user.$id,
+        full_name: name,
+        email: email,
+        created_at: new Date().toISOString()
+    },
+    [
+        Permission.read(Role.user(user.$id)),
+        Permission.update(Role.user(user.$id)),
+        Permission.delete(Role.user(user.$id)),
+    ]
+);
       toast.success("Account created successfully!", { id: toastId });
       
       // Automatically log the user in to establish session

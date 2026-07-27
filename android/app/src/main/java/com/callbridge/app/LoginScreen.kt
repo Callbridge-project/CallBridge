@@ -351,13 +351,19 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(modifier = Modifier.weight(1f).height(1.dp).background(cardBorder))
+                Box(modifier = Modifier
+                    .weight(1f)
+                    .height(1.dp)
+                    .background(cardBorder))
                 Text(
                     text = "  Or login with  ",
                     fontSize = 13.sp,
                     color = mutedText
                 )
-                Box(modifier = Modifier.weight(1f).height(1.dp).background(cardBorder))
+                Box(modifier = Modifier
+                    .weight(1f)
+                    .height(1.dp)
+                    .background(cardBorder))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
