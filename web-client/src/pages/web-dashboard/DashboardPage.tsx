@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import CustomModal from "@/components/modals/modal";
-import { databases, client, AppwriteConfig, CALL_LOGS_COLLECTION_ID, SMS_LOGS_COLLECTION_ID, DEVICES_COLLECTION_ID, ACTIVITY_LOGS_COLLECTION_ID } from "@/lib/appwrite";
+import { databases, client, AppwriteConfig, APPWRITE_DATABASE_ID, CALL_LOGS_COLLECTION_ID, SMS_LOGS_COLLECTION_ID, DEVICES_COLLECTION_ID, ACTIVITY_LOGS_COLLECTION_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import PageLayout from "@/components/layout/PageLayout";
 import StatsGrid from "@/components/layout/dashboard";
@@ -116,6 +116,16 @@ export default function DashboardPage() {
     const dbId = AppwriteConfig.databaseId;
 
     // 1. Linked devices
+const response = await databases.listDocuments(
+    APPWRITE_DATABASE_ID,
+    CALL_LOGS_COLLECTION_ID,
+    [
+        Query.equal('user_id', user.$id),
+        Query.orderDesc('timestamp'),
+        Query.limit(10)
+    ]
+);
+
     const devicesRes = await databases.listDocuments(dbId, DEVICES_COLLECTION_ID, [
       Query.equal("user_id", userId)
     ]);

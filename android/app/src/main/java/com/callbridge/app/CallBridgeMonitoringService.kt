@@ -3,12 +3,14 @@ package com.callbridge.app
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.launch
 
 class CallBridgeMonitoringService : Service() {
 
@@ -38,8 +40,29 @@ class CallBridgeMonitoringService : Service() {
         }
 
         // Start call monitoring on both Android 12+ and Android 11 - 8
-        callMonitor = CallMonitor(this)
+        // Get the stored userId from SharedPreferences
+        val prefs = getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
+        val userId = prefs.getString("current_user_id", "") ?: ""
+        Log.d("CallBridge", "ForegroundService: userId = '$userId'")
+
+// Pass userId into CallMonitor
+        callMonitor = CallMonitor(this, userId)
         callMonitor?.startListening()
+
+        // Register or update device in Appwrite
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            if (userId.isNotEmpty()) {
+                DeviceRegistrationService.registerOrUpdateDevice(
+                    this@CallBridgeMonitoringService,
+                    userId
+                )
+            }
+        }
+
+        // Sync any events that were saved while offline
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            AppwriteSyncService.syncPendingCallLogs(this@CallBridgeMonitoringService)
+        }
 
         return START_STICKY
     }
