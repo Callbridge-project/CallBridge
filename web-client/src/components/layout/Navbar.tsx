@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import logoImg from "@/assets/images/logo.png";
+import logo1 from "../../assets/logo1.png";
 
 export default function Navbar() {
   const location = useLocation();
@@ -43,7 +43,7 @@ export default function Navbar() {
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between">
         {/* Left: Logo */}
         <Link to="/" className="flex items-center gap-2 cursor-pointer">
-          <img src={logoImg} className={`object-contain transition-all duration-300 ${isScrolled ? "h-12" : "h-16"}`} alt="CallBridge Logo" />
+          <img src={logo1} className={`object-contain transition-all duration-300 ${isScrolled ? "h-12" : "h-16"}`} alt="CallBridge Logo" />
         </Link>
         
         {/* Center: Navigation Links */}

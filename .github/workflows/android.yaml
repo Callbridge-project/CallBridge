@@ -29,8 +29,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # React Native needs Node.js to bundle the JS side of the app
+     # - name: Setup Node.js
+        #uses: actions/setup-node@v4
+       # with:
+        #  node-version: '20'
+        #  cache: 'npm'
+         # cache-dependency-path: android/package-lock.json
 
-    
+      # Install React Native JS dependencies
+      #- name: Install JavaScript Dependencies
+      #  run: npm ci
 
       # Android native compilation needs Java 17
       - name: Set up JDK 17
@@ -74,7 +83,12 @@ jobs:
 
       # Build debug APK — remove continue-on-error once android folder is finalized
       - name: Compile Development Build
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --
+        
+        
+        
+        
+        ~no-daemon
         continue-on-error: true    # REMOVE THIS LINE once Android setup is complete
 
       # Makes the built APK downloadable from the GitHub Actions tab

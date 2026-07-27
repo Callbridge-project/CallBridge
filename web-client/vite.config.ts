@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
+import path from 'path'
 import dts from "vite-plugin-dts";
 
 export default defineConfig(({ mode }) => {
@@ -41,6 +42,7 @@ export default defineConfig(({ mode }) => {
                 if (assetInfo.name === "style.css") return "styles.css";
                 return assetInfo.name;
               },
+            
             },
           },
         }

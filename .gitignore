@@ -42,6 +42,7 @@ lerna-debug.log*
 secrets.properties
 local.properties
 *.local
+*.env
 
 # ─── OS FILES ──────────────────────────────────────────
 .DS_Store
