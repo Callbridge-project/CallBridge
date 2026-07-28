@@ -37,7 +37,7 @@ object DeviceRegistrationService {
                             "android_version" to androidVersion,
                             "app_version" to appVersion,
                             "monitoring_active" to true,
-                            "monitoring_status" to "active",
+                            "monitoring_status" to true,
                             "last_sync" to now,
                             "registered_at" to now
                         ),
@@ -59,7 +59,7 @@ object DeviceRegistrationService {
                         data = mapOf(
                             "last_sync" to now,
                             "monitoring_active" to true,
-                            "monitoring_status" to "active"
+                            "monitoring_status" to true
                         )
                     )
                     Log.d(TAG, "DeviceRegistration: device last_sync updated")
