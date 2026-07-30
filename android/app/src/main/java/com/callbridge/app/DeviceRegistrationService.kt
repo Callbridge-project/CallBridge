@@ -54,9 +54,8 @@ object DeviceRegistrationService {
                             "device_name" to deviceName,
                             "android_version" to androidVersion,
                             "app_version" to appVersion,
+                            "monitoring_active" to true,
                             "monitoring_status" to true,
-                            "notification_permission" to notificationPermission,
-                            "battery_optimization_ignored" to batteryOptIgnored,
                             "last_sync" to now,
                             "device_registered_at" to now
                         )
@@ -72,9 +71,8 @@ object DeviceRegistrationService {
                         documentId = deviceDocId,
                         data = mapOf(
                             "last_sync" to now,
-                            "monitoring_status" to true,
-                            "notification_permission" to notificationPermission,
-                            "battery_optimization_ignored" to batteryOptIgnored
+                            "monitoring_active" to true,
+                            "monitoring_status" to true
                         )
                     )
                     Log.d(TAG, "DeviceRegistration: device updated")
