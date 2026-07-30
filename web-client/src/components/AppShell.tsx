@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import { client, AppwriteConfig, CALL_LOGS_COLLECTION_ID, SMS_LOGS_COLLECTION_ID } from "@/lib/appwrite";
-import logoImg from "@/assets/images/logo.png";
+import logo1 from "../assets/logo1.png";
 
 export default function AppShell() {
   const { user, logout } = useAuth();
@@ -144,8 +144,8 @@ export default function AppShell() {
     <div className="flex h-full flex-col justify-between bg-white py-6 border-r border-slate-100 pl-4 pr-2 overflow-y-auto scrollbar-hide">
       <div className="space-y-8">
         {/* Logo */}
-        <div className="flex items-center justify-center -ml-10">
-          <img src={logoImg} alt="CallBridge Logo" className="h-16 object-contain" />
+        <div className="flex items-center justify-center -ml-2">
+          <img src={logo1} alt="CallBridge Logo" className="h-21 object-contain" />
         </div>
 
         {/* Menu Items */}
