@@ -116,16 +116,6 @@ export default function DashboardPage() {
     const dbId = AppwriteConfig.databaseId;
 
     // 1. Linked devices
-const response = await databases.listDocuments(
-    APPWRITE_DATABASE_ID,
-    CALL_LOGS_COLLECTION_ID,
-    [
-        Query.equal('user_id', user.$id),
-        Query.orderDesc('timestamp'),
-        Query.limit(10)
-    ]
-);
-
     const devicesRes = await databases.listDocuments(dbId, DEVICES_COLLECTION_ID, [
       Query.equal("user_id", userId)
     ]);

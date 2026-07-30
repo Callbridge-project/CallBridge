@@ -57,6 +57,7 @@ export const login = async (
 }
 };
 
+
 // GET CURRENT USER — returns logged in user or null
 export const getCurrentUser = async (): Promise<{
     success: boolean;

@@ -33,20 +33,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         checkSession();
     }, []);
 
-    const login = async (email: string, password: string): Promise<Models.Session> => {
-        setIsLoading(true);
+ const login = async (email: string, password: string): Promise<Models.Session> => {
+    setIsLoading(true);
+    try {
+        // Check if a session already exists first
+        // If it does, delete it before creating a new one
+        // This handles the case where a stale session is stuck in the browser
         try {
-            const session = await account.createEmailPasswordSession(email, password);
-            const currentUser = await account.get();
-            setUser(currentUser);
-            return session;
-        } catch (error: unknown) {
-            setUser(null);
-            throw error;
-        } finally {
-            setIsLoading(false);
+            await account.deleteSession("current");
+        } catch {
+            // No active session to delete — that is fine, continue
         }
-    };
+
+        const session = await account.createEmailPasswordSession(email, password);
+        const currentUser = await account.get();
+        setUser(currentUser);
+        return session;
+    } catch (error: unknown) {
+        setUser(null);
+        throw error;
+    } finally {
+        setIsLoading(false);
+    }
+};
 
     const logout = async () => {
         setIsLoading(true);

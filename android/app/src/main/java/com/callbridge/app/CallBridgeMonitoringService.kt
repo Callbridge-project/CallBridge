@@ -17,6 +17,8 @@ class CallBridgeMonitoringService : Service() {
     // CallMonitor only exists on Android 12 and above
     private var callMonitor: CallMonitor? = null
 
+    private var smsObserver: SmsObserver? = null
+
     override fun onCreate() {
         // Create the notification channel the first time the service starts
         super.onCreate()
@@ -49,6 +51,9 @@ class CallBridgeMonitoringService : Service() {
         callMonitor = CallMonitor(this, userId)
         callMonitor?.startListening()
 
+        smsObserver = SmsObserver(this, userId)
+        smsObserver?.startObserving()
+
         // Register or update device in Appwrite
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             if (userId.isNotEmpty()) {
@@ -62,6 +67,7 @@ class CallBridgeMonitoringService : Service() {
         // Sync any events that were saved while offline
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             AppwriteSyncService.syncPendingCallLogs(this@CallBridgeMonitoringService)
+            AppwriteSyncService.syncPendingSmsLogs(this@CallBridgeMonitoringService)
         }
 
         return START_STICKY
@@ -70,6 +76,7 @@ class CallBridgeMonitoringService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         callMonitor?.stopListening()
+        smsObserver?.stopObserving()
         Log.d("CallBridge", "ForegroundService: destroyed")
     }
 
