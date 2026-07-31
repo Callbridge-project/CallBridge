@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { databases, client, AppwriteConfig, SMS_LOGS_COLLECTION_ID, DEVICES_COLLECTION_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import PageLayout from "@/components/layout/PageLayout";
@@ -31,6 +32,8 @@ import { CustomOnlyDateFilterComponent, DateFilterValue } from "@/components/sha
 export default function SmsPage() {
   const { user } = useAuth();
   const userId = user?.$id;
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
 
   // States
   const [devices, setDevices] = useState<any[]>([]);
@@ -149,6 +152,16 @@ export default function SmsPage() {
         queries.push(Query.lessThanEqual("timestamp", dateFilter.end_date.toISOString()));
       }
 
+      if (searchQuery) {
+        queries.push(
+          Query.or([
+            Query.contains("contact_name", searchQuery),
+            Query.contains("phone_number", searchQuery),
+            Query.contains("message_body", searchQuery)
+          ])
+        );
+      }
+
       const res = await databases.listDocuments(dbId, SMS_LOGS_COLLECTION_ID, queries);
       
       setLogs(res.documents);
@@ -163,7 +176,7 @@ export default function SmsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, selectedDevice, selectedStatus, dateFilter]);
+  }, [userId, selectedDevice, selectedStatus, dateFilter, searchQuery]);
 
   // Fetch next page (infinite scroll)
   const fetchNextPage = useCallback(async () => {
@@ -200,6 +213,16 @@ export default function SmsPage() {
         queries.push(Query.lessThanEqual("timestamp", dateFilter.end_date.toISOString()));
       }
 
+      if (searchQuery) {
+        queries.push(
+          Query.or([
+            Query.contains("contact_name", searchQuery),
+            Query.contains("phone_number", searchQuery),
+            Query.contains("message_body", searchQuery)
+          ])
+        );
+      }
+
       const res = await databases.listDocuments(dbId, SMS_LOGS_COLLECTION_ID, queries);
       
       if (res.documents.length > 0) {
@@ -226,7 +249,7 @@ export default function SmsPage() {
     } finally {
       setIsFetchingMore(false);
     }
-  }, [userId, isFetchingMore, hasMore, selectedDevice, selectedStatus, dateFilter]);
+  }, [userId, isFetchingMore, hasMore, selectedDevice, selectedStatus, dateFilter, searchQuery]);
 
   // ── useQuery: devices list ──────────────────────────────────────────────────
   const { data: devicesData } = useQuery({
@@ -244,7 +267,7 @@ export default function SmsPage() {
 
   // ── useQuery: SMS stats (cached per filter combo) ────────────────────────
   const { data: statsData } = useQuery({
-    queryKey: ["smsStats", userId, selectedDevice, dateFilter],
+    queryKey: ["smsStats", userId, selectedDevice, dateFilter, searchQuery],
     queryFn: async () => {
       if (!userId) return { total: 0, unread: 0, read: 0 };
       const dbId = AppwriteConfig.databaseId;
@@ -256,6 +279,16 @@ export default function SmsPage() {
       }
       if (dateFilter.end_date) {
         baseQ.push(Query.lessThanEqual("timestamp", dateFilter.end_date.toISOString()));
+      }
+
+      if (searchQuery) {
+        baseQ.push(
+          Query.or([
+            Query.contains("contact_name", searchQuery),
+            Query.contains("phone_number", searchQuery),
+            Query.contains("message_body", searchQuery)
+          ])
+        );
       }
 
       const [totalRes, unreadRes] = await Promise.all([
@@ -279,7 +312,7 @@ export default function SmsPage() {
   // Trigger paginated log re-fetch when filters change
   useEffect(() => {
     fetchFirstPage();
-  }, [selectedDevice, selectedStatus, dateFilter, fetchFirstPage]);
+  }, [selectedDevice, selectedStatus, dateFilter, searchQuery, fetchFirstPage]);
 
   // Browser online/offline listeners
   useEffect(() => {

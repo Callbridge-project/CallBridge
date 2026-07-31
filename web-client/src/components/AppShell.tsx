@@ -1,5 +1,5 @@
-import React, { useState, useEffect, Suspense } from "react";
-import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useRef, Suspense } from "react";
+import { NavLink, Outlet, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useIsFetching } from "@tanstack/react-query";
 import { 
@@ -15,22 +15,131 @@ import {
   Search, 
   Menu, 
   X,
-  ShieldAlert
+  ShieldAlert,
+  Loader2,
+  PhoneCall
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
-import { client, AppwriteConfig, CALL_LOGS_COLLECTION_ID, SMS_LOGS_COLLECTION_ID } from "@/lib/appwrite";
+import { client, databases, AppwriteConfig, CALL_LOGS_COLLECTION_ID, SMS_LOGS_COLLECTION_ID } from "@/lib/appwrite";
+import { Query } from "appwrite";
 import logo1 from "../assets/logo1.png";
 
 export default function AppShell() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Search feature states
+  const [searchText, setSearchText] = useState("");
+  const [searchResults, setSearchResults] = useState<{ calls: any[]; sms: any[] }>({ calls: [], sms: [] });
+  const [isSearching, setIsSearching] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Global fetch indicator — shows the top loader bar whenever any React Query
   // fetch is in flight (first load, background revalidation, filter changes, etc.)
   const isFetching = useIsFetching();
+
+  const userId = user?.$id;
+
+  // Sync search input value when navigating onto /calls or /sms
+  useEffect(() => {
+    const query = searchParams.get("search") || "";
+    const isContextualPage = location.pathname === "/calls" || location.pathname === "/sms";
+    if (isContextualPage) {
+      setSearchText(query);
+    } else {
+      setSearchText("");
+    }
+  }, [location.pathname, searchParams]);
+
+  // Debounce URL search parameters update on contextual pages
+  useEffect(() => {
+    const isContextualPage = location.pathname === "/calls" || location.pathname === "/sms";
+    if (!isContextualPage) return;
+
+    const handler = setTimeout(() => {
+      setSearchParams(prev => {
+        if (searchText.trim()) {
+          prev.set("search", searchText);
+        } else {
+          prev.delete("search");
+        }
+        return prev;
+      });
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchText, location.pathname, setSearchParams]);
+
+  // Global search popover query when on other pages
+  useEffect(() => {
+    const isContextualPage = location.pathname === "/calls" || location.pathname === "/sms";
+    if (isContextualPage || !searchText.trim() || !userId) {
+      setSearchResults({ calls: [], sms: [] });
+      setIsPopoverOpen(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setIsPopoverOpen(true);
+
+    const handler = setTimeout(async () => {
+      try {
+        const dbId = AppwriteConfig.databaseId;
+        const cleanQuery = searchText.trim();
+        
+        // Fetch Call logs matching
+        const [callsRes, smsRes] = await Promise.all([
+          databases.listDocuments(dbId, CALL_LOGS_COLLECTION_ID, [
+            Query.equal("user_id", userId),
+            Query.or([
+              Query.contains("contact_name", cleanQuery),
+              Query.contains("phone_number", cleanQuery)
+            ]),
+            Query.orderDesc("timestamp"),
+            Query.limit(5)
+          ]),
+          databases.listDocuments(dbId, SMS_LOGS_COLLECTION_ID, [
+            Query.equal("user_id", userId),
+            Query.or([
+              Query.contains("contact_name", cleanQuery),
+              Query.contains("phone_number", cleanQuery),
+              Query.contains("message_body", cleanQuery)
+            ]),
+            Query.orderDesc("timestamp"),
+            Query.limit(5)
+          ])
+        ]);
+
+        setSearchResults({
+          calls: callsRes.documents,
+          sms: smsRes.documents
+        });
+      } catch (e) {
+        console.error("Global search error:", e);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [searchText, location.pathname, userId]);
+
+  // Dismiss search popover on clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setIsPopoverOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // 1. Service Worker Message Listener (Navigate smoothly on notification click)
   useEffect(() => {
@@ -314,13 +423,184 @@ export default function AppShell() {
             </button>
 
             {/* Search Input Box */}
-            <div className="relative hidden max-w-sm w-full sm:block">
+            <div ref={searchContainerRef} className="relative hidden max-w-sm w-full sm:block">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/50" />
               <input
                 type="text"
-                placeholder="Search system logs..."
-                className="h-10 w-full rounded-full bg-user-card pl-10 pr-4 text-sm text-foreground placeholder-foreground/50 border-0 focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all duration-200"
+                placeholder={
+                  location.pathname === "/calls" 
+                    ? "Search calls..." 
+                    : location.pathname === "/sms" 
+                    ? "Search SMS..." 
+                    : "Search system logs..."
+                }
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                onFocus={() => {
+                  if (searchText.trim() && location.pathname !== "/calls" && location.pathname !== "/sms") {
+                    setIsPopoverOpen(true);
+                  }
+                }}
+                className="h-10 w-full rounded-full bg-user-card pl-10 pr-10 text-sm text-foreground placeholder-foreground/50 border border-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all duration-200"
               />
+              {searchText && (
+                <button
+                  onClick={() => {
+                    setSearchText("");
+                    setIsPopoverOpen(false);
+                    setSearchParams(prev => {
+                      prev.delete("search");
+                      return prev;
+                    });
+                  }}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 flex h-5.5 w-5.5 items-center justify-center rounded-full bg-slate-200/50 hover:bg-slate-200 hover:scale-105 text-slate-500 hover:text-slate-700 transition focus:outline-none"
+                  title="Clear search"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+
+              {/* Global search results popover */}
+              {isPopoverOpen && searchText.trim() && (
+                <div className="absolute left-0 right-0 mt-2 max-h-[420px] overflow-y-auto rounded-2xl border border-slate-100 bg-white shadow-2xl z-50 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {isSearching ? (
+                    <div className="flex items-center justify-center py-6 gap-2 text-slate-400 text-xs font-semibold">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      Searching CallBridge...
+                    </div>
+                  ) : (
+                    <>
+                      {searchResults.calls.length === 0 && searchResults.sms.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-6 text-center text-slate-400">
+                          <ShieldAlert className="h-5.5 w-5.5 mb-2 text-slate-300" />
+                          <p className="text-xs font-bold text-slate-500">No search results for calls or sms</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">We couldn't find matches for "{searchText}".</p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Call Logs Section */}
+                          <div>
+                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                              <Phone className="h-3 w-3 text-slate-400" />
+                              Call Logs
+                            </h4>
+                            {searchResults.calls.length === 0 ? (
+                              <p className="text-xs text-slate-400 pl-4.5 italic">No matching calls found.</p>
+                            ) : (
+                              <div className="space-y-1">
+                                {searchResults.calls.map((call) => (
+                                  <div
+                                    key={call.$id}
+                                    onClick={() => {
+                                      setIsPopoverOpen(false);
+                                      navigate(`/calls?search=${encodeURIComponent(call.contact_name || call.phone_number)}`);
+                                    }}
+                                    className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl cursor-pointer text-xs transition duration-150 group"
+                                  >
+                                    <div className="min-w-0 flex-1 pr-2 text-left">
+                                      <span className="font-bold text-slate-800 group-hover:text-primary transition-colors block truncate">
+                                        {call.contact_name || "Unknown"}
+                                      </span>
+                                      <span className="text-[10px] text-slate-400 block mt-0.5 truncate">{call.phone_number}</span>
+                                    </div>
+                                    <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
+                                      call.log_type === "missed_call" 
+                                        ? "bg-rose-50 text-rose-600 border border-rose-100/50" 
+                                        : "bg-emerald-50 text-emerald-600 border border-emerald-100/50"
+                                    }`}>
+                                      {call.log_type === "missed_call" ? "Missed" : "Answered"}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* SMS Logs Section */}
+                          <div className="border-t border-slate-50 pt-3">
+                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                              <MessageSquare className="h-3 w-3 text-slate-400" />
+                              SMS Messages
+                            </h4>
+                            {searchResults.sms.length === 0 ? (
+                              <p className="text-xs text-slate-400 pl-4.5 italic">No matching messages found.</p>
+                            ) : (
+                              <div className="space-y-1">
+                                {searchResults.sms.map((sms) => (
+                                  <div
+                                    key={sms.$id}
+                                    onClick={() => {
+                                      setIsPopoverOpen(false);
+                                      navigate(`/sms?search=${encodeURIComponent(sms.contact_name || sms.phone_number)}`);
+                                    }}
+                                    className="p-2 hover:bg-slate-50 rounded-xl cursor-pointer text-xs transition duration-150 group block text-left"
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-bold text-slate-800 group-hover:text-primary transition-colors block truncate">
+                                        {sms.contact_name || "Unknown"}
+                                      </span>
+                                      <span className="text-[10px] text-slate-400 shrink-0">{sms.phone_number}</span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 truncate mt-1 font-normal italic">
+                                      "{sms.message_body}"
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+
+                      {/* Quick Filters Footer */}
+                      <div className="border-t border-slate-50 pt-2.5 flex flex-col gap-1.5 pl-1">
+                        {searchResults.calls.length > 0 ? (
+                          <button
+                            onClick={() => {
+                              setIsPopoverOpen(false);
+                              navigate(`/calls?search=${encodeURIComponent(searchText)}`);
+                            }}
+                            className="text-[11px] font-bold text-primary hover:text-primary-dark hover:underline flex items-center gap-1 text-left w-full focus:outline-none"
+                          >
+                            Search "{searchText}" in Call Logs &rarr;
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setIsPopoverOpen(false);
+                              navigate(`/calls`);
+                            }}
+                            className="text-[11px] font-bold text-slate-500 hover:text-primary hover:underline flex items-center gap-1 text-left w-full focus:outline-none"
+                          >
+                            Go to Call Logs &rarr;
+                          </button>
+                        )}
+                        {searchResults.sms.length > 0 ? (
+                          <button
+                            onClick={() => {
+                              setIsPopoverOpen(false);
+                              navigate(`/sms?search=${encodeURIComponent(searchText)}`);
+                            }}
+                            className="text-[11px] font-bold text-primary hover:text-primary-dark hover:underline flex items-center gap-1 text-left w-full focus:outline-none"
+                          >
+                            Search "{searchText}" in SMS Messages &rarr;
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setIsPopoverOpen(false);
+                              navigate(`/sms`);
+                            }}
+                            className="text-[11px] font-bold text-slate-500 hover:text-primary hover:underline flex items-center gap-1 text-left w-full focus:outline-none"
+                          >
+                            Go to SMS Messages &rarr;
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

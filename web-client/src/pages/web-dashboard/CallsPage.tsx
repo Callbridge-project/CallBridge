@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { databases, client, AppwriteConfig, CALL_LOGS_COLLECTION_ID, DEVICES_COLLECTION_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import PageLayout from "@/components/layout/PageLayout";
@@ -33,6 +34,8 @@ import { CustomOnlyDateFilterComponent, DateFilterValue } from "@/components/sha
 export default function CallsPage() {
   const { user } = useAuth();
   const userId = user?.$id;
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
 
   // States
   const [devices, setDevices] = useState<any[]>([]);
@@ -149,6 +152,15 @@ export default function CallsPage() {
         queries.push(Query.lessThanEqual("timestamp", dateFilter.end_date.toISOString()));
       }
 
+      if (searchQuery) {
+        queries.push(
+          Query.or([
+            Query.contains("contact_name", searchQuery),
+            Query.contains("phone_number", searchQuery)
+          ])
+        );
+      }
+
       const res = await databases.listDocuments(dbId, CALL_LOGS_COLLECTION_ID, queries);
       
       setLogs(res.documents);
@@ -163,7 +175,7 @@ export default function CallsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, selectedDevice, selectedType, dateFilter]);
+  }, [userId, selectedDevice, selectedType, dateFilter, searchQuery]);
 
   // Fetch next page (infinite scroll)
   const fetchNextPage = useCallback(async () => {
@@ -198,6 +210,15 @@ export default function CallsPage() {
         queries.push(Query.lessThanEqual("timestamp", dateFilter.end_date.toISOString()));
       }
 
+      if (searchQuery) {
+        queries.push(
+          Query.or([
+            Query.contains("contact_name", searchQuery),
+            Query.contains("phone_number", searchQuery)
+          ])
+        );
+      }
+
       const res = await databases.listDocuments(dbId, CALL_LOGS_COLLECTION_ID, queries);
       
       if (res.documents.length > 0) {
@@ -224,7 +245,7 @@ export default function CallsPage() {
     } finally {
       setIsFetchingMore(false);
     }
-  }, [userId, isFetchingMore, hasMore, selectedDevice, selectedType, dateFilter]);
+  }, [userId, isFetchingMore, hasMore, selectedDevice, selectedType, dateFilter, searchQuery]);
 
   // ── useQuery: devices list (cached, no re-fetch on revisit) ──────────────────
   const { data: devicesData } = useQuery({
@@ -246,7 +267,7 @@ export default function CallsPage() {
 
   // ── useQuery: stats (cached per filter combo) ───────────────────────────
   const { data: statsData } = useQuery({
-    queryKey: ["callStats", userId, selectedDevice, dateFilter],
+    queryKey: ["callStats", userId, selectedDevice, dateFilter, searchQuery],
     queryFn: async () => {
       if (!userId) return { total: 0, missed: 0, answered: 0 };
       const dbId = AppwriteConfig.databaseId;
@@ -258,6 +279,15 @@ export default function CallsPage() {
       }
       if (dateFilter.end_date) {
         baseQ.push(Query.lessThanEqual("timestamp", dateFilter.end_date.toISOString()));
+      }
+
+      if (searchQuery) {
+        baseQ.push(
+          Query.or([
+            Query.contains("contact_name", searchQuery),
+            Query.contains("phone_number", searchQuery)
+          ])
+        );
       }
 
       const [totalRes, missedRes] = await Promise.all([
@@ -283,7 +313,7 @@ export default function CallsPage() {
   // Trigger paginated log re-fetch when filters change
   useEffect(() => {
     fetchFirstPage();
-  }, [selectedDevice, selectedType, dateFilter, fetchFirstPage]);
+  }, [selectedDevice, selectedType, dateFilter, searchQuery, fetchFirstPage]);
 
   // Browser online/offline listeners
   useEffect(() => {
