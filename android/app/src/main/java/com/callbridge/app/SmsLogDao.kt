@@ -11,6 +11,20 @@ interface SmsLogDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSmsLog(smsLog: SmsLogEntity)
 
+    // Check if a sent SMS already exists by phone number and approximate timestamp
+    // Used to prevent duplicates from rapid onChange triggers
+    @Query("""
+        SELECT COUNT(*) FROM sms_logs 
+        WHERE phoneNumber = :phoneNumber 
+        AND logType = :logType 
+        AND timestamp > :afterTimestamp
+    """)
+    suspend fun countRecentLogs(
+        phoneNumber: String,
+        logType: String,
+        afterTimestamp: String
+    ): Int
+
     @Query("SELECT * FROM sms_logs WHERE isSynced = 0")
     suspend fun getUnsyncedLogs(): List<SmsLogEntity>
 

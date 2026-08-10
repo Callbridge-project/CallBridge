@@ -9,6 +9,8 @@ import android.provider.Telephony
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
 
@@ -19,45 +21,54 @@ class SmsObserver(
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
-    // Track the last SMS count to detect new sent messages
-    private var lastSmsCount = getSmsCount()
+    // Debounce job — cancels and restarts on every rapid onChange call
+    // Only executes after 2 seconds of silence
+    private var debounceJob: Job? = null
+
+    // Tracks the last sent SMS we processed to prevent duplicates
+    private var lastProcessedSmsId: Long = -1L
 
     override fun onChange(selfChange: Boolean, uri: Uri?) {
         super.onChange(selfChange, uri)
-        scope.launch {
-            handleSmsChange(uri)
+
+        // Cancel any pending debounce and restart the timer
+        // This means we only act after onChange stops firing rapidly
+        debounceJob?.cancel()
+        debounceJob = scope.launch {
+            delay(2000) // wait 2 seconds of silence before processing
+            handleSmsChange()
         }
     }
 
-    private suspend fun handleSmsChange(uri: Uri?) {
+    private suspend fun handleSmsChange() {
         try {
-            // Check for newly sent SMS
             checkForSentSms()
-
-            // Check for read status changes
             checkForReadStatusChanges()
-
         } catch (e: Exception) {
-            Log.e("CallBridge", "SmsObserver: error handling change — ${e.message}")
+            Log.e("CallBridge", "SmsObserver: error — ${e.message}")
         }
     }
 
-    // ── Detect newly sent SMS ─────────────────────────────────────
     private suspend fun checkForSentSms() {
-        val currentCount = getSmsCount()
-        if (currentCount <= lastSmsCount) return
-
-        // New SMS detected in sent box
         try {
             val cursor = context.contentResolver.query(
                 Uri.parse("content://sms/sent"),
-                arrayOf("address", "body", "date"),
-                null, null,
-                "date DESC"
+                arrayOf("_id", "address", "body", "date"),
+                null,
+                null,
+                "date DESC LIMIT 1" // only the most recent sent message
             )
 
             cursor?.use {
                 if (it.moveToFirst()) {
+                    val smsId = it.getLong(it.getColumnIndexOrThrow("_id"))
+
+                    // Duplicate guard — if we already processed this SMS id skip it
+                    if (smsId == lastProcessedSmsId) {
+                        Log.d("CallBridge", "SmsObserver: SMS id=$smsId already processed, skipping")
+                        return
+                    }
+
                     val phoneNumber = it.getString(
                         it.getColumnIndexOrThrow("address")
                     ) ?: ""
@@ -68,9 +79,8 @@ class SmsObserver(
 
                     val contactName = ContactResolver.getContactName(context, phoneNumber)
 
-                    Log.d("CallBridge", "SmsObserver: sent SMS to $phoneNumber")
+                    Log.d("CallBridge", "SmsObserver: sent SMS to $phoneNumber id=$smsId")
 
-                    // Save sent SMS to Room
                     val repository = SmsLogRepository(context)
                     repository.saveSmsLog(
                         userId = userId,
@@ -79,25 +89,22 @@ class SmsObserver(
                         messageBody = body.take(500),
                         logType = "sms_sent",
                         timestamp = timestamp,
-                        isRead = true  // sent messages are always read by default
+                        isRead = true
                     )
 
-                    // Sync to Appwrite
+                    // Mark this SMS id as processed so we never save it again
+                    lastProcessedSmsId = smsId
+
                     AppwriteSyncService.syncPendingSmsLogs(context)
                 }
             }
         } catch (e: Exception) {
             Log.e("CallBridge", "SmsObserver: sent SMS error — ${e.message}")
         }
-
-        lastSmsCount = currentCount
     }
 
-    // ── Detect when user reads a received SMS on the device ───────
     private suspend fun checkForReadStatusChanges() {
         try {
-            // Query for messages that are now marked as read
-            // but our Room database still has them as unread
             val cursor = context.contentResolver.query(
                 Telephony.Sms.CONTENT_URI,
                 arrayOf(
@@ -114,32 +121,18 @@ class SmsObserver(
             cursor?.use {
                 val phoneNumbers = mutableListOf<String>()
                 while (it.moveToNext()) {
-                    val phone = it.getString(it.getColumnIndexOrThrow(Telephony.Sms.ADDRESS)) ?: ""
+                    val phone = it.getString(
+                        it.getColumnIndexOrThrow(Telephony.Sms.ADDRESS)
+                    ) ?: ""
                     if (phone.isNotEmpty()) phoneNumbers.add(phone)
                 }
 
                 if (phoneNumbers.isNotEmpty()) {
-                    // Update Appwrite documents for these numbers to is_read: true
                     AppwriteSyncService.syncReadStatusUpdates(context, phoneNumbers, userId)
                 }
             }
         } catch (e: Exception) {
-            Log.e("CallBridge", "SmsObserver: read status check error — ${e.message}")
-        }
-    }
-
-    private fun getSmsCount(): Int {
-        return try {
-            val cursor = context.contentResolver.query(
-                Uri.parse("content://sms/sent"),
-                arrayOf("_id"),
-                null, null, null
-            )
-            val count = cursor?.count ?: 0
-            cursor?.close()
-            count
-        } catch (e: Exception) {
-            0
+            Log.e("CallBridge", "SmsObserver: read status error — ${e.message}")
         }
     }
 
@@ -153,6 +146,7 @@ class SmsObserver(
     }
 
     fun stopObserving() {
+        debounceJob?.cancel()
         context.contentResolver.unregisterContentObserver(this)
         Log.d("CallBridge", "SmsObserver: stopped observing")
     }

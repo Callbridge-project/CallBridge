@@ -51,6 +51,8 @@ class CallBridgeMonitoringService : Service() {
         callMonitor = CallMonitor(this, userId)
         callMonitor?.startListening()
 
+        // Start SMS observation — handles both received read status
+        // and sent SMS detection simultaneously
         smsObserver = SmsObserver(this, userId)
         smsObserver?.startObserving()
 
@@ -58,8 +60,7 @@ class CallBridgeMonitoringService : Service() {
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             if (userId.isNotEmpty()) {
                 DeviceRegistrationService.registerOrUpdateDevice(
-                    this@CallBridgeMonitoringService,
-                    userId
+                    this@CallBridgeMonitoringService, userId
                 )
             }
         }
