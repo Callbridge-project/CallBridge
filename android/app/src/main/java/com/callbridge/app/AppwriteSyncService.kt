@@ -10,6 +10,7 @@ import kotlinx.coroutines.withContext
 
 object AppwriteSyncService {
 
+
     private const val TAG = "CallBridge"
 
     // Call this after every detected call event

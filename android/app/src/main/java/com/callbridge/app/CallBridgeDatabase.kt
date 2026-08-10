@@ -9,7 +9,7 @@ import androidx.room.RoomDatabase
 // version = 1 is your starting version — increment when you change the schema
 @Database(
     entities = [CallLogEntity::class, SmsLogEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class CallBridgeDatabase : RoomDatabase() {
