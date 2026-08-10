@@ -16,9 +16,25 @@ class SmsLogRepository(context: Context) {
         messageBody: String?,
         logType: String = "sms_received",
         timestamp: String,
-        isRead: Boolean
+        isRead: Boolean = false
     ) {
         withContext(Dispatchers.IO) {
+            // Check if we already saved this same log type from this number
+            // in the last 10 seconds — if so skip to prevent duplicates
+            val tenSecondsAgo = java.time.Instant.now()
+                .minusSeconds(10)
+                .toString()
+
+            val recentCount = dao.countRecentLogs(
+                phoneNumber = phoneNumber,
+                logType = logType,
+                afterTimestamp = tenSecondsAgo
+            )
+
+            if (recentCount > 0) {
+                Log.d("CallBridge", "SmsRepository: duplicate detected for $phoneNumber — skipping")
+                return@withContext
+            }
             val entity = SmsLogEntity(
                 userId = userId,
                 phoneNumber = phoneNumber,
@@ -27,10 +43,10 @@ class SmsLogRepository(context: Context) {
                 logType = logType,
                 timestamp = timestamp,
                 isRead = isRead,
-                isSynced = isRead
+                isSynced = false
             )
             dao.insertSmsLog(entity)
-            Log.d("CallBridge", "SmsRepository: saved sms_received from $phoneNumber")
+            Log.d("CallBridge", "SmsRepository: saved $logType from $phoneNumber")
         }
     }
 

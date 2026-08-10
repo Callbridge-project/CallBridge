@@ -111,13 +111,13 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 .align(Alignment.BottomCenter)
                 .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .background(Color.White)
-                .padding(horizontal = 24.dp, vertical = 32.dp)
+                .padding(horizontal = 24.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
 
             // HEADING
             Text(
-                text = "Welcome back",
+                text = "Welcome Back",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = nearBlack,
@@ -153,7 +153,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 placeholder = { Text("Enter your email", color = mutedText) },
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(id = android.R.drawable.ic_dialog_email),
+                        painter = painterResource(id = R.drawable.email),
                         contentDescription = "Email icon",
                         tint = mutedText,
                         modifier = Modifier.size(20.dp)
@@ -162,11 +162,11 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(30.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = cardBorder,
                     focusedBorderColor = primaryBlue,
-                    unfocusedContainerColor = lightGray,
+                    unfocusedContainerColor = white,
                     focusedContainerColor = lightGray
                 )
             )
@@ -216,11 +216,11 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     PasswordVisualTransformation(),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(30.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = cardBorder,
                     focusedBorderColor = primaryBlue,
-                    unfocusedContainerColor = lightGray,
+                    unfocusedContainerColor = white,
                     focusedContainerColor = lightGray
                 )
             )
@@ -302,6 +302,8 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                             context.startForegroundService(serviceIntent)
 
                             onLoginSuccess()
+
+
                         } else {
                             errorMessage = "Invalid email or password. Please try again."
                         }
