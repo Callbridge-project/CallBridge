@@ -229,9 +229,12 @@ export default function LandingPage() {
 
             {/* FLOATING BADGES */}
             {/* Top-Left: Calls Synced */}
-            <div className={`absolute top-[18%] -left-[14%] bg-white border border-slate-100/70 rounded-2xl p-3 shadow-badge-blue flex items-center gap-3 hover:-translate-y-1 transition-all duration-300 ease-out delay-100 ${
-              isMounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-            }`}>
+            <div 
+              className={`absolute top-[18%] -left-[14%] bg-white border border-slate-100/70 rounded-2xl p-3 shadow-badge-blue flex items-center gap-3 transition-all duration-300 ease-out delay-100 animate-float ${
+                isMounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+              }`}
+              style={{ animationDuration: '7s', animationDelay: '0.2s' }}
+            >
               <div className="h-9 w-9 rounded-full bg-emerald-50 border border-emerald-100/50 flex items-center justify-center text-emerald-500 shrink-0">
                 <Phone className="h-4.5 w-4.5" />
               </div>
@@ -242,9 +245,12 @@ export default function LandingPage() {
             </div>
 
             {/* Bottom-Left: Active Calls */}
-            <div className={`absolute bottom-[16%] -left-[12%] bg-white border border-slate-100/70 rounded-2xl p-3 shadow-badge-blue flex items-center gap-3 hover:-translate-y-1 transition-all duration-300 ease-out delay-300 ${
-              isMounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-            }`}>
+            <div 
+              className={`absolute bottom-[16%] -left-[12%] bg-white border border-slate-100/70 rounded-2xl p-3 shadow-badge-blue flex items-center gap-3 transition-all duration-300 ease-out delay-300 animate-float ${
+                isMounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+              }`}
+              style={{ animationDuration: '6s', animationDelay: '0.5s' }}
+            >
               <div className="h-9 w-9 rounded-full bg-blue-50 border border-blue-100/50 flex items-center justify-center text-blue-500 shrink-0">
                 <Phone className="h-4.5 w-4.5 rotate-90" />
               </div>
@@ -255,9 +261,12 @@ export default function LandingPage() {
             </div>
 
             {/* Top-Right: SMS Bridged */}
-            <div className={`absolute top-[38%] -right-[12%] bg-white border border-slate-100/70 rounded-2xl p-3 shadow-badge-blue flex items-center gap-3 hover:-translate-y-1 transition-all duration-300 ease-out delay-200 ${
-              isMounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-            }`}>
+            <div 
+              className={`absolute top-[33%] -right-[4%] bg-white border border-slate-100/70 rounded-2xl p-3 shadow-badge-blue flex items-center gap-3 transition-all duration-300 ease-out delay-200 animate-float ${
+                isMounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+              }`}
+              style={{ animationDuration: '8s', animationDelay: '0.1s' }}
+            >
               <div className="h-9 w-9 rounded-full bg-rose-50 border border-rose-100/50 flex items-center justify-center text-rose-500 shrink-0">
                 <MessageSquare className="h-4.5 w-4.5" />
               </div>
@@ -268,9 +277,12 @@ export default function LandingPage() {
             </div>
 
             {/* Bottom-Right: Monitoring Active */}
-            <div className={`absolute bottom-[22%] -right-[10%] bg-white border border-slate-100/70 rounded-2xl p-3 shadow-badge-blue flex items-center gap-3 hover:-translate-y-1 transition-all duration-300 ease-out delay-400 ${
-              isMounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-            }`}>
+            <div 
+              className={`absolute bottom-[22%] -right-[4%] bg-white border border-slate-100/70 rounded-2xl p-3 shadow-badge-blue flex items-center gap-3 transition-all duration-300 ease-out delay-400 animate-float ${
+                isMounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+              }`}
+              style={{ animationDuration: '6.5s', animationDelay: '0.3s' }}
+            >
               <div className="h-9 w-9 rounded-full bg-blue-50 border border-blue-100/50 flex items-center justify-center text-[#005EA1] shrink-0">
                 <Radio className="h-4.5 w-4.5" />
               </div>
