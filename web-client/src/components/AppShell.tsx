@@ -18,7 +18,8 @@ import {
   X,
   ShieldAlert,
   Loader2,
-  PhoneCall
+  PhoneCall,
+  PhoneOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
@@ -52,6 +53,7 @@ export default function AppShell() {
       return [];
     }
   });
+
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const notificationContainerRef = useRef<HTMLDivElement>(null);
 
@@ -733,7 +735,7 @@ export default function AppShell() {
                 >
                   <Bell className="h-4.5 w-4.5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white border border-white animate-pulse">
+                    <span className="absolute -top-0.5 -right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
                       {unreadCount}
                     </span>
                   )}
@@ -741,7 +743,7 @@ export default function AppShell() {
 
                 {/* In-app notification popover */}
                 {isNotificationOpen && (
-                  <div className="absolute right-0 mt-2 w-80 max-h-[380px] overflow-y-auto rounded-2xl border border-slate-100 bg-white shadow-2xl z-50 p-4 space-y-3.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute right-0 mt-2 w-80 max-h-[380px] overflow-y-auto scrollbar-hide rounded-2xl border border-slate-100 bg-white shadow-2xl z-50 p-4 space-y-3.5 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                       <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Notifications</h3>
                       {unreadCount > 0 && (
@@ -756,7 +758,7 @@ export default function AppShell() {
 
                     {notifications.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-8 text-center text-slate-400">
-                        <BellOff className="h-6 w-6 mb-2 text-slate-350" />
+                        <BellOff className="h-6 w-6 mb-2 text-slate-355" />
                         <p className="text-xs font-bold text-slate-500">All caught up!</p>
                         <p className="text-[10px] text-slate-400 mt-0.5">No new notifications.</p>
                       </div>
@@ -767,32 +769,49 @@ export default function AppShell() {
                             <div
                               key={notification.id}
                               onClick={() => handleNotificationClick(notification)}
-                              className={`flex items-start gap-3 p-2.5 rounded-xl cursor-pointer transition text-left group ${
+                              className={`flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition text-left group ${
                                 notification.read 
-                                  ? "hover:bg-slate-50 border border-transparent" 
-                                  : "bg-blue-50/40 border border-blue-100/30 hover:bg-blue-50/60"
+                                  ? "bg-white border-slate-100/50 hover:bg-slate-50/80" 
+                                  : "bg-blue-50/20  border border-blue-100/30 hover:bg-blue-50/40"
                               }`}
                             >
-                              <div className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 ${
-                                notification.type === "call" 
-                                  ? "bg-rose-50 text-rose-600" 
-                                  : "bg-emerald-50 text-emerald-600"
+                              <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+                                notification.read 
+                                  ? "bg-slate-100/50 text-slate-400 border border-slate-200/40" 
+                                  : (notification.type === "call" 
+                                      ? "bg-rose-50 text-rose-500 border border-rose-100" 
+                                      : "bg-blue-50 text-primary border border-primary/20")
                               }`}>
-                                {notification.type === "call" ? <Phone className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />}
+                                {notification.type === "call" ? (
+                                  <PhoneOff className="h-4.5 w-4.5" />
+                                ) : (
+                                  <MessageSquare className="h-4.5 w-4.5" />
+                                )}
+                                {!notification.read && (
+                                  <span className={`absolute top-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white animate-pulse ${
+                                    notification.type === "call" ? "bg-rose-500" : "bg-primary"
+                                  }`} />
+                                )}
                               </div>
 
                               <div className="min-w-0 flex-1">
-                                <div className="flex items-start justify-between gap-1.5">
-                                  <p className={`text-xs font-bold text-slate-800 group-hover:text-primary transition-colors truncate`}>
-                                    {notification.title}
-                                  </p>
-                                  <span className="text-[9px] text-slate-400 shrink-0 font-medium">
-                                    {formatRelativeTime(notification.timestamp)}
-                                  </span>
-                                </div>
-                                <p className="text-[10px] text-slate-400 truncate mt-0.5 font-normal">
+                                <h4 className={`text-xs font-semibold text-slate-900 leading-snug group-hover:text-primary transition-colors`}>
+                                  {notification.title}
+                                </h4>
+                                <p className="truncate text-[10px] text-slate-500 mt-0.5 font-normal">
                                   {notification.body}
                                 </p>
+                              </div>
+
+                              <div className="text-right shrink-0">
+                                <div className="text-[10px] font-semibold text-slate-400">
+                                  {formatRelativeTime(notification.timestamp)}
+                                </div>
+                                <div className={`text-[8px] font-bold mt-0.5 uppercase tracking-wider ${
+                                  notification.read ? "text-slate-400" : "text-primary"
+                                }`}>
+                                  {notification.read ? "Read" : "New"}
+                                </div>
                               </div>
                             </div>
                           ))}
