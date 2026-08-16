@@ -12,6 +12,7 @@ import {
   Settings, 
   LogOut, 
   Bell, 
+  BellOff,
   Search, 
   Menu, 
   X,
@@ -25,12 +26,36 @@ import { client, databases, AppwriteConfig, CALL_LOGS_COLLECTION_ID, SMS_LOGS_CO
 import { Query } from "appwrite";
 import logo1 from "../assets/logo1.png";
 
+interface InAppNotification {
+  id: string;
+  type: "call" | "sms";
+  title: string;
+  body: string;
+  timestamp: number; // millisecond epoch
+  read: boolean;
+  route: string;
+}
+
 export default function AppShell() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // In-app notifications states
+  const [notifications, setNotifications] = useState<InAppNotification[]>(() => {
+    try {
+      const saved = localStorage.getItem("cb_notifications_list");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const notificationContainerRef = useRef<HTMLDivElement>(null);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   // Search feature states
   const [searchText, setSearchText] = useState("");
@@ -45,6 +70,50 @@ export default function AppShell() {
   const isFetching = useIsFetching();
 
   const userId = user?.$id;
+
+  // Save notifications to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem("cb_notifications_list", JSON.stringify(notifications));
+  }, [notifications]);
+
+  // Relative time formatter
+  const formatRelativeTime = (timestamp: number) => {
+    const diff = Date.now() - timestamp;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    toast.success("All notifications marked as read.");
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+    toast.success("Notifications cleared.");
+  };
+
+  const handleNotificationClick = (notification: InAppNotification) => {
+    setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
+    setIsNotificationOpen(false);
+    navigate(notification.route);
+  };
+
+  // Dismiss notification popover on clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notificationContainerRef.current && !notificationContainerRef.current.contains(e.target as Node)) {
+        setIsNotificationOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Sync search input value when navigating onto /calls or /sms
   useEffect(() => {
@@ -178,36 +247,73 @@ export default function AppShell() {
       `databases.${dbId}.collections.${CALL_LOGS_COLLECTION_ID}.documents`,
       `databases.${dbId}.collections.${SMS_LOGS_COLLECTION_ID}.documents`
     ], (response) => {
-      if (!checkNotificationStatus()) return;
-
       const events = response.events;
       const payload = response.payload as any;
       if (payload.user_id !== userId) return;
 
-      // Import notification service dynamically
-      import("@/lib/notificationService").then(({ triggerNotification }) => {
-        // Handle Call Notification
-        if (events.some(e => e.includes(CALL_LOGS_COLLECTION_ID)) && events.some(e => e.endsWith(".create"))) {
-          const isCallsPage = location.pathname === "/calls";
-          if (document.hidden || !isCallsPage) {
-            const caller = payload.contact_name || payload.caller_number || payload.phone_number || "Unknown Number";
-            const title = "Incoming Call";
-            const body = `${caller} called on ${payload.device_name || "linked device"}`;
-            triggerNotification(title, body, "/calls");
+      // Handle Call Notification (only for missed calls)
+      if (events.some(e => e.includes(CALL_LOGS_COLLECTION_ID)) && events.some(e => e.endsWith(".create"))) {
+        if (payload.log_type === "missed_call") {
+          const caller = payload.contact_name || payload.caller_number || payload.phone_number || "Unknown Number";
+          const title = "Missed Call";
+          const body = `You missed a call from ${caller} on ${payload.device_name || "linked device"}`;
+
+          // Prepend in-app notification
+          setNotifications(prev => [
+            {
+              id: payload.$id || Math.random().toString(),
+              type: "call" as const,
+              title,
+              body,
+              timestamp: Date.now(),
+              read: false,
+              route: "/calls"
+            },
+            ...prev
+          ].slice(0, 50));
+
+          // Trigger browser native notification if enabled
+          if (checkNotificationStatus()) {
+            const isCallsPage = location.pathname === "/calls";
+            if (document.hidden || !isCallsPage) {
+              import("@/lib/notificationService").then(({ triggerNotification }) => {
+                triggerNotification(title, body, "/calls");
+              });
+            }
           }
         }
+      }
 
-        // Handle SMS Notification
-        if (events.some(e => e.includes(SMS_LOGS_COLLECTION_ID)) && events.some(e => e.endsWith(".create"))) {
+      // Handle SMS Notification
+      if (events.some(e => e.includes(SMS_LOGS_COLLECTION_ID)) && events.some(e => e.endsWith(".create"))) {
+        const sender = payload.contact_name || payload.caller_number || payload.phone_number || "Unknown Number";
+        const title = "New SMS";
+        const body = `Message from ${sender}: "${payload.message_body || ""}"`;
+
+        // Prepend in-app notification
+        setNotifications(prev => [
+          {
+            id: payload.$id || Math.random().toString(),
+            type: "sms" as const,
+            title,
+            body,
+            timestamp: Date.now(),
+            read: false,
+            route: "/sms"
+          },
+          ...prev
+        ].slice(0, 50));
+
+        // Trigger browser native notification if enabled
+        if (checkNotificationStatus()) {
           const isSmsPage = location.pathname === "/sms";
           if (document.hidden || !isSmsPage) {
-            const sender = payload.contact_name || payload.caller_number || payload.phone_number || "Unknown Number";
-            const title = "New SMS";
-            const body = `Message from ${sender} on ${payload.device_name || "linked device"}`;
-            triggerNotification(title, body, "/sms");
+            import("@/lib/notificationService").then(({ triggerNotification }) => {
+              triggerNotification(title, body, "/sms");
+            });
           }
         }
-      });
+      }
     });
 
     return () => {
@@ -618,11 +724,93 @@ export default function AppShell() {
 
             {/* Actions & Avatar icons */}
             <div className="flex items-center gap-1">
-              {/* Notification Bell */}
-              <button className="relative flex h-9 w-9 items-center justify-center text-foreground/80 hover:text-foreground hover:bg-slate-50 rounded-lg transition-all focus:outline-none">
-                <Bell className="h-4.5 w-4.5" />
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border border-white"></span>
-              </button>
+              {/* Notification Bell Container */}
+              <div ref={notificationContainerRef} className="relative">
+                <button
+                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                  className="relative flex h-9 w-9 items-center justify-center text-foreground/80 hover:text-foreground hover:bg-slate-50 rounded-lg transition-all focus:outline-none"
+                  title="View notifications"
+                >
+                  <Bell className="h-4.5 w-4.5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white border border-white animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* In-app notification popover */}
+                {isNotificationOpen && (
+                  <div className="absolute right-0 mt-2 w-80 max-h-[380px] overflow-y-auto rounded-2xl border border-slate-100 bg-white shadow-2xl z-50 p-4 space-y-3.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                      <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={markAllAsRead}
+                          className="text-[10px] font-bold text-primary hover:text-primary-dark hover:underline focus:outline-none"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+
+                    {notifications.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 text-center text-slate-400">
+                        <BellOff className="h-6 w-6 mb-2 text-slate-350" />
+                        <p className="text-xs font-bold text-slate-500">All caught up!</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">No new notifications.</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                          {notifications.map((notification) => (
+                            <div
+                              key={notification.id}
+                              onClick={() => handleNotificationClick(notification)}
+                              className={`flex items-start gap-3 p-2.5 rounded-xl cursor-pointer transition text-left group ${
+                                notification.read 
+                                  ? "hover:bg-slate-50 border border-transparent" 
+                                  : "bg-blue-50/40 border border-blue-100/30 hover:bg-blue-50/60"
+                              }`}
+                            >
+                              <div className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 ${
+                                notification.type === "call" 
+                                  ? "bg-rose-50 text-rose-600" 
+                                  : "bg-emerald-50 text-emerald-600"
+                              }`}>
+                                {notification.type === "call" ? <Phone className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />}
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-1.5">
+                                  <p className={`text-xs font-bold text-slate-800 group-hover:text-primary transition-colors truncate`}>
+                                    {notification.title}
+                                  </p>
+                                  <span className="text-[9px] text-slate-400 shrink-0 font-medium">
+                                    {formatRelativeTime(notification.timestamp)}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-slate-400 truncate mt-0.5 font-normal">
+                                  {notification.body}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="border-t border-slate-100 pt-2.5 flex justify-end">
+                          <button
+                            onClick={clearAllNotifications}
+                            className="text-[10px] font-bold text-rose-500 hover:text-rose-600 hover:underline focus:outline-none"
+                          >
+                            Clear all
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Settings Gear */}
               <button 
