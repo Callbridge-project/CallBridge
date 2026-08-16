@@ -25,6 +25,9 @@ const SupportPage = lazy(() => import("@/pages/web-dashboard/SupportPage"));
 const ForgotPasswordPage = lazy(
   () => import("@/pages/auth/ForgotPasswordPage"),
 );
+const ResetPasswordPage = lazy(
+  () => import("@/pages/auth/ResetPasswordPage"),
+);
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -75,6 +78,7 @@ export const AppRouter = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/policy" element={<PolicyPage />} />
 
           {/* Protected Routes mounted inside the global AppShell layout */}
