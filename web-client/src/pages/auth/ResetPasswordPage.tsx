@@ -130,6 +130,7 @@ export default function ResetPasswordPage() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     placeholder="••••••••"
                     className={`h-12 rounded-full border-global-border px-4 focus-visible:ring-blue-500 ${error && !password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                     value={password}
@@ -156,6 +157,7 @@ export default function ResetPasswordPage() {
                   <Input
                     id="confirmPassword"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     placeholder="••••••••"
                     className={`h-12 rounded-full border-global-border px-4 focus-visible:ring-blue-500 ${error && password !== confirmPassword ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                     value={confirmPassword}
