@@ -8,12 +8,8 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <div className="flex flex-col items-center gap-4">
-          {/* A sleek modern spinner */}
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-800 border-t-blue-500" />
-          <p className="text-sm font-medium text-slate-400">Restoring session...</p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-500" />
       </div>
     );
   }
