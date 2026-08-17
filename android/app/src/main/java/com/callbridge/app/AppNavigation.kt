@@ -120,7 +120,7 @@ fun AppNavigation() {
         }
 
         composable(Routes.DASHBOARD) {
-            DashboardPlaceholder(
+            MainScreen(
                 onLogout = {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(Routes.DASHBOARD) { inclusive = true }

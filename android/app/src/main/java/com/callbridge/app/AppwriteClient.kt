@@ -5,7 +5,6 @@ import io.appwrite.Client
 import io.appwrite.services.Account
 import io.appwrite.services.Databases
 
-
 object AppwriteClient {
 
     lateinit var client: Client
@@ -13,6 +12,7 @@ object AppwriteClient {
     lateinit var account: Account
 
     fun initialize(context: Context) {
+        // BuildConfig is generated in com.callbridge.app.BuildConfig
         client = Client(context)
             .setEndpoint(BuildConfig.APPWRITE_ENDPOINT)
             .setProject(BuildConfig.APPWRITE_PROJECT_ID)
