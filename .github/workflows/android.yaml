@@ -6,7 +6,7 @@ name: CallBridge Android Mobile CI
 # - Manually from GitHub Actions tab
 on:
   push:
-    branches: [main, dev, feature/**] 
+    branches: [main, dev, 'feature/**'] 
     paths:
       - 'android/**'
   pull_request:
@@ -28,19 +28,14 @@ jobs:
       # Pull the code from the branch being pushed or PR'd
       - name: Checkout Code
         uses: actions/checkout@v4
+        with: 
+          fetch-depth: 0   # fetch all history for accurate versioning
 
-
-      # React Native needs Node.js to bundle the JS side of the app
-      # Skip npm setup if this is a pure Android Gradle build
-       - name: Setup Node.js
-         uses: actions/setup-node@v4
-         with:
-            node-version: '20'
-            cache: 'npm'
-            cache-dependency-path: package-lock.json
-      #
-      # - name: Install JavaScript Dependencies
-      #   run: npm ci
+      # Skip Node.js setup for pure Native Android Kotlin build
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '20'
 
       # Android native compilation needs Java 17
       - name: Set up JDK 17
@@ -50,7 +45,6 @@ jobs:
           java-version: '17'
 
       # Cache Gradle so it doesn't re-download everything on every run
-      # Saves 2-3 minutes per workflow run
       - name: Cache Gradle Packages
         uses: actions/cache@v4
         with:
@@ -61,17 +55,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # Git sometimes strips execute permission from gradlew
-      # Without this the build step fails with "Permission denied"
+      # Grant execute permission for gradlew wrapper
       - name: Grant Execute Permission for Gradle Wrapper
         run: chmod +x gradlew
         continue-on-error: true
 
-      
-      # Build debug APK — remove continue-on-error once android folder is finalized
+      # Build debug APK
       - name: Compile Development Build
         run: ./gradlew assembleDebug --no-daemon
-        continue-on-error: true    # REMOVE THIS LINE once Android setup is complete
+        continue-on-error: true    # REMOVE THIS LINE once Android setup is finalized
 
       # Makes the built APK downloadable from the GitHub Actions tab
       - name: Upload APK Artifact
