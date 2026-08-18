@@ -39,11 +39,6 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import phoneLaptopMockup from "@/assets/images/phone-laptop-mockup.png";
-import syshealth from "@/assets/syshealth.png";
-import dashandroid from "@/assets/dash-android.png";
-import shield1 from "@/assets/container.png";
-
-
 
 // Helper to format date relative to today
 const formatRelativeTime = (isoString: string) => {
@@ -603,8 +598,9 @@ export default function DashboardPage() {
           <div className="absolute inset-0 bg-white/[0.02] pointer-events-none" />
           
           <div className="flex items-center gap-4 z-10">
-            <img src={shield1} alt="Shield Icon" className="h-13 w-12 shrink-0" />
-            
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 border border-white/20 shadow-inner">
+              <Shield className="h-6 w-6 text-white" />
+            </div>
             <div className="min-w-0">
               <h3 className="text-lg font-bold tracking-tight">Device Monitoring Active</h3>
               <div className="flex flex-wrap items-center gap-3 mt-1 text-xs">
@@ -678,8 +674,7 @@ export default function DashboardPage() {
           <div className="relative overflow-hidden bg-white border border-dashboard-border/40 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-[20px] p-6 w-full flex flex-col justify-between transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.05)] h-[210px]">
             {/* Watermark smartphone */}
             <div className="absolute right-[-12px] bottom-[-12px] opacity-[0.025] text-slate-900 pointer-events-none">
-             
-            <img src={dashandroid} alt="Android" className="h-26 w-32" />
+              <Smartphone className="h-32 w-32" />
             </div>
             <div className="flex items-center justify-between z-10">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 border border-amber-100 text-amber-600">
@@ -711,8 +706,7 @@ export default function DashboardPage() {
           <div className="relative overflow-hidden bg-white border border-dashboard-border/40 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-[20px] p-6 w-full flex flex-col justify-between transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.05)] h-[210px]">
             <div className="flex items-center justify-between">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 border border-amber-100 text-amber-600">
-                
-                <img src={syshealth} alt="System Health" className="h-5 w-4" />
+                <Shield className="h-5 w-5" />
               </div>
             </div>
             <div className="mt-auto">

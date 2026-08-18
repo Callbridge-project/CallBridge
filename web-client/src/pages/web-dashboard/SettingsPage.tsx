@@ -390,6 +390,7 @@ export default function SettingsPage() {
                   <div className="relative">
                     <input
                       type={showCurrentPass ? "text" : "password"}
+                      autoComplete="new-password"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       placeholder="••••••••••••"
@@ -412,6 +413,7 @@ export default function SettingsPage() {
                   <div className="relative">
                     <input
                       type={showNewPass ? "text" : "password"}
+                      autoComplete="new-password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Enter new password"
@@ -455,6 +457,7 @@ export default function SettingsPage() {
                   <label className="text-xs font-bold text-[#005EA1]">Confirm New Password</label>
                   <input
                     type="password"
+                    autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Repeat new password"

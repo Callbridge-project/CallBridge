@@ -10,11 +10,11 @@ import kotlinx.coroutines.withContext
 
 object AppwriteSyncService {
 
+
     private const val TAG = "CallBridge"
 
-    /**
-     * Finds all unsynced call logs in Room and uploads them to Appwrite.
-     */
+    // Call this after every detected call event
+    // It finds all unsynced rows and uploads them to Appwrite
     suspend fun syncPendingCallLogs(context: Context) {
         withContext(Dispatchers.IO) {
             try {
@@ -22,7 +22,7 @@ object AppwriteSyncService {
                 val unsyncedLogs = repository.getUnsyncedLogs()
 
                 if (unsyncedLogs.isEmpty()) {
-                    Log.d(TAG, "AppwriteSync: no pending call logs to sync")
+                    Log.d(TAG, "AppwriteSync: no pending logs to sync")
                     return@withContext
                 }
 
@@ -30,6 +30,7 @@ object AppwriteSyncService {
 
                 for (log in unsyncedLogs) {
                     try {
+                        // POST the call log document to Appwrite
                         AppwriteClient.databases.createDocument(
                             databaseId = BuildConfig.APPWRITE_DATABASE_ID,
                             collectionId = BuildConfig.APPWRITE_COLLECTION_CALLLOGS,
@@ -39,7 +40,7 @@ object AppwriteSyncService {
                                 "phone_number" to log.phoneNumber,
                                 "contact_name" to log.contactName,
                                 "log_type" to log.logType,
-                                "timestamp" to log.timestamp
+                                "timestamp" to log.timestamp,
                             ),
                             permissions = listOf(
                                 Permission.read(Role.user(log.userId)),
@@ -48,24 +49,34 @@ object AppwriteSyncService {
                             )
                         )
 
+                        // Mark as synced in Room only after
+                        // Appwrite confirms the document was created
                         repository.markAsSynced(log.id)
-                        Log.d(TAG, "AppwriteSync: synced log id=${log.id} type=${log.logType}")
+
+                        Log.d(TAG, "AppwriteSync: synced log id=${log.id} " +
+                                "type=${log.logType} number=${log.phoneNumber}")
 
                     } catch (e: Exception) {
-                        Log.e(TAG, "AppwriteSync: failed to sync call log id=${log.id} — ${e.message}")
+                        // If one log fails do not stop — continue to the next one
+                        // It will be retried on the next sync cycle
+                        Log.e(TAG, "AppwriteSync: failed to sync log id=${log.id} — ${e.message}")
                     }
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "AppwriteSync: call sync failed — ${e.message}")
-            }
 
-            updateDeviceLastSync(context)
+                Log.d(TAG, "AppwriteSync: sync cycle complete")
+
+            } catch (e: Exception) {
+                Log.e(TAG, "AppwriteSync: sync failed — ${e.message}")
+            }
+            // Update device last_sync timestamp after successful sync
+            val prefs = context.getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
+            val userId = prefs.getString("current_user_id", "") ?: ""
+            if (userId.isNotEmpty()) {
+                DeviceRegistrationService.registerOrUpdateDevice(context, userId)
+            }
         }
     }
 
-    /**
-     * Finds all unsynced SMS logs in Room and uploads them to Appwrite.
-     */
     suspend fun syncPendingSmsLogs(context: Context) {
         withContext(Dispatchers.IO) {
             try {
@@ -97,23 +108,28 @@ object AppwriteSyncService {
                         )
 
                         repository.markAsSynced(log.id)
-                        Log.d(TAG, "AppwriteSync: synced SMS id=${log.id}")
+                        Log.d(TAG, "AppwriteSync: synced SMS id=${log.id} from=${log.phoneNumber}")
 
                     } catch (e: Exception) {
                         Log.e(TAG, "AppwriteSync: failed SMS id=${log.id} — ${e.message}")
                     }
                 }
+
+                Log.d(TAG, "AppwriteSync: SMS sync cycle complete")
+
             } catch (e: Exception) {
                 Log.e(TAG, "AppwriteSync: SMS sync failed — ${e.message}")
             }
 
-            updateDeviceLastSync(context)
+            // Update device last_sync after SMS sync
+            val prefs = context.getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
+            val userId = prefs.getString("current_user_id", "") ?: ""
+            if (userId.isNotEmpty()) {
+                DeviceRegistrationService.registerOrUpdateDevice(context, userId)
+            }
         }
     }
 
-    /**
-     * Updates Appwrite documents when SMS are marked as read locally.
-     */
     suspend fun syncReadStatusUpdates(
         context: Context,
         phoneNumbers: List<String>,
@@ -121,6 +137,8 @@ object AppwriteSyncService {
     ) {
         withContext(Dispatchers.IO) {
             try {
+                // Find documents in Appwrite that match these phone numbers
+                // and are still marked as unread
                 for (phoneNumber in phoneNumbers) {
                     try {
                         val results = AppwriteClient.databases.listDocuments(
@@ -141,22 +159,15 @@ object AppwriteSyncService {
                                 documentId = doc.id,
                                 data = mapOf("is_read" to true)
                             )
+                            Log.d("CallBridge", "AppwriteSync: marked SMS as read doc=${doc.id}")
                         }
                     } catch (e: Exception) {
-                        Log.e(TAG, "AppwriteSync: read status update failed for $phoneNumber — ${e.message}")
+                        Log.e("CallBridge", "AppwriteSync: read sync error for $phoneNumber — ${e.message}")
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "AppwriteSync: read status sync failed — ${e.message}")
+                Log.e("CallBridge", "AppwriteSync: read status sync failed — ${e.message}")
             }
-        }
-    }
-
-    private suspend fun updateDeviceLastSync(context: Context) {
-        val prefs = context.getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
-        val userId = prefs.getString("current_user_id", "") ?: ""
-        if (userId.isNotEmpty()) {
-            DeviceRegistrationService.registerOrUpdateDevice(context, userId)
         }
     }
 }

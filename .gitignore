@@ -15,15 +15,15 @@ android/*.aar
 android/gradlew.bat
 
 # ─── REACT / WEB DASHBOARD ─────────────────────────────
-web-dashboard/node_modules/
-web-dashboard/.env
-web-dashboard/.env.local
-web-dashboard/.env.development.local
-web-dashboard/.env.test.local
-web-dashboard/.env.production.local
-web-dashboard/build/
-web-dashboard/dist/
-web-dashboard/dist-ssr/
+web-client/node_modules/
+web-client/.env
+web-client/.env.local
+web-client/.env.development.local
+web-client/.env.test.local
+web-client/.env.production.local
+web-client/build/
+web-client/dist/
+web-client/dist-ssr/
 
 # ─── LOGS ──────────────────────────────────────────────
 logs
