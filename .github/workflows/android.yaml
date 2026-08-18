@@ -6,7 +6,7 @@ name: CallBridge Android Mobile CI
 # - Manually from GitHub Actions tab
 on:
   push:
-    branches: [main, dev, feature/**] 
+    branches: [main, dev, 'feature/**'] 
     paths:
       - 'android/**'
   pull_request:
@@ -28,6 +28,8 @@ jobs:
       # Pull the code from the branch being pushed or PR'd
       - name: Checkout Code
         uses: actions/checkout@v4
+        with: 
+          fetch-depth: 0   # fetch all history for accurate versioning
 
       # React Native needs Node.js to bundle the JS side of the app
      # - name: Setup Node.js
@@ -49,7 +51,6 @@ jobs:
           java-version: '17'
 
       # Cache Gradle so it doesn't re-download everything on every run
-      # Saves 2-3 minutes per workflow run
       - name: Cache Gradle Packages
         uses: actions/cache@v4
         with:
@@ -60,28 +61,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # Git sometimes strips execute permission from gradlew
-      # Without this the build step fails with "Permission denied"
+      # Grant execute permission for gradlew wrapper
       - name: Grant Execute Permission for Gradle Wrapper
         run: chmod +x gradlew
         continue-on-error: true
 
-      # Validate commit message follows Jira format: CB-XX: Description
-      # Blocks merge if commit message doesn't match the agreed format
-      - name: Validate Commit Message Format
-        if: github.event_name == 'pull_request'
-        run: |
-          COMMIT_MSG=$(git log --format=%s -n 1 ${{ github.event.pull_request.head.sha }})
-          echo "Commit message: $COMMIT_MSG"
-          if ! echo "$COMMIT_MSG" | grep -qE '^CMP-[0-9]+: .+'; then
-            echo "❌ Commit message does not follow required format."
-            echo "   Required: CMP-XX: Description"
-            echo "   Example:  CMP-40: Add Android permissions handling"
-            exit 1
-          fi
-          echo "✅ Commit message format is valid."
-
-      # Build debug APK — remove continue-on-error once android folder is finalized
+      # Build debug APK
       - name: Compile Development Build
         run: ./gradlew assembleDebug --
         

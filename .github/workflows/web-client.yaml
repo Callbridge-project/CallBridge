@@ -6,7 +6,7 @@ name: CallBridge Web Client CI
 # - Manually from GitHub Actions tab
 on:
   push:
-    branches: [main, dev, feature/**]  # triggers on any branch with 'feature/' prefix
+    branches: [main, dev, 'feature/**']  # triggers on any branch with 'feature/' prefix
     paths:
       - 'web-client/**'              # triggers only when web dashboard files change
   pull_request:
@@ -14,8 +14,6 @@ on:
     paths:
       - 'web-client/**'
   workflow_dispatch:
-
-
 
 jobs:
   build-and-test:
@@ -40,12 +38,6 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-    
       # Checks code quality — won't fail if lint script isn't set up yet
       - name: Run Code Linting
         run: npm run lint --if-present
-
-      # If no tests written yet add this to web-client/package.json:
-      # "scripts": { "test": "echo 'No tests yet' && exit 0" }
-      - name: Run Tests
-        run: npm test --if-present

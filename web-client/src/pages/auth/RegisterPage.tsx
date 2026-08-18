@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 
 // Import mockup image
-import laptopMockupImg from "@/assets/images/laptop-mockup.png";
+import laptopMockupImg from "@/assets/images/Callbridge Signup.png";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -230,7 +230,7 @@ await databases.createDocument(
                 <img 
                   src={laptopMockupImg} 
                   alt="CallBridge Web Dashboard Mockup" 
-                  className="h-[95%] w-[95%] object-contain pointer-events-none animate-float-slow"
+                  className="h-[120%] w-[95%] object-contain pointer-events-none animate-float-slow"
                 />
                 
                 {/* Badge 1: Calls Synced */}

@@ -128,7 +128,7 @@ export default function LoginPage() {
           // Android app deep link redirect
           const delimiter = decodedRedirect.includes("?") ? "&" : "?";
           const deepLinkUrl = `${decodedRedirect}${delimiter}userId=${session.userId}&sessionToken=${session.$id}`;
-          
+
           toast.success("Redirecting back to CallBridge app...");
           setTimeout(() => {
             window.location.href = deepLinkUrl;
@@ -142,7 +142,7 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error("Login failed:", error);
-      
+
       const appwriteErrorCode = error?.code;
       if (appwriteErrorCode === 401) {
         setErrors({ form: "Invalid email or password. Please try again." });
@@ -182,46 +182,64 @@ export default function LoginPage() {
             {/* HIGH-FIDELITY SMARTPHONE ILLUSTRATION & BADGES */}
             <div className="relative mt-12 hidden w-full lg:block max-w-[460px]">
               <div className="relative w-full aspect-square rounded-[2rem] flex items-center justify-center p-0">
-                
+
                 {/* Floating smartphone image */}
                 <img 
                   src={phoneMockupImg} 
                   alt="CallBridge Android Mockup" 
                   className="h-[90%] w-[98%] object-contain pointer-events-none animate-float-slow"
                 />
-                
+
                 {/* Badge 1: Dashboard Secure (top center) */}
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-badge-blue z-10">
+                <div 
+                  className="absolute -top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-badge-blue z-10 animate-float"
+                  style={{ animationDuration: '7s', animationDelay: '0.2s' }}
+                >
                   <Lock className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs font-semibold text-slate-700">Dashboard Secure</span>
                 </div>
 
                 {/* Badge 2: Calls Synced (left top) */}
-                <div className="absolute top-[32%] -left-10 flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-badge-blue z-10">
+                <div 
+                  className="absolute top-[32%] -left-10 flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-badge-blue z-10 animate-float"
+                  style={{ animationDuration: '6s', animationDelay: '0.5s' }}
+                >
                   <Phone className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs font-semibold text-slate-700">Calls Synced</span>
                 </div>
 
                 {/* Badge 3: Device Connected (left bottom) */}
-                <div className="absolute bottom-[20%] -left-12 flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-badge-blue z-10">
+                <div 
+                  className="absolute bottom-[20%] -left-12 flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-badge-blue z-10 animate-float"
+                  style={{ animationDuration: '8s', animationDelay: '0.1s' }}
+                >
                   <Smartphone className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs font-semibold text-slate-700">Device Connected</span>
                 </div>
 
                 {/* Badge 4: SMS Monitored (right top) */}
-                <div className="absolute top-[38%] -right-8 flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-badge-blue z-10">
+                <div 
+                  className="absolute top-[38%] -right-8 flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-badge-blue z-10 animate-float"
+                  style={{ animationDuration: '6.5s', animationDelay: '0.3s' }}
+                >
                   <MessageSquare className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs font-semibold text-slate-700">SMS Monitored</span>
                 </div>
 
                 {/* Badge 5: Call Activity Updated (right bottom) */}
-                <div className="absolute bottom-[28%] -right-10 flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-badge-blue z-10">
+                <div 
+                  className="absolute bottom-[28%] -right-10 flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-badge-blue z-10 animate-float"
+                  style={{ animationDuration: '7.5s', animationDelay: '0.4s' }}
+                >
                   <RefreshCw className="h-3.5 w-3.5 text-primary animate-spin" style={{ animationDuration: "10s" }} />
                   <span className="text-xs font-semibold text-slate-700">Call Activity Updated</span>
                 </div>
 
                 {/* Badge 6: Monitoring Active (bottom center) */}
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-badge-blue z-10">
+                <div 
+                  className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-badge-blue z-10 animate-float"
+                  style={{ animationDuration: '6.8s', animationDelay: '0.15s' }}
+                >
                   <BarChart2 className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs font-semibold text-slate-700">Monitoring Active</span>
                 </div>
@@ -246,7 +264,7 @@ export default function LoginPage() {
               )}
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-3">
-                
+
                 {/* Email Address */}
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-semibold capitalize text-[#0B1B35]">Email Address</Label>
@@ -353,9 +371,7 @@ export default function LoginPage() {
                 type="button"
                 variant="outline"
                 className="h-12 w-full border border-global-border hover:bg-slate-50 hover:text-slate-900 rounded-full font-semibold flex items-center justify-center gap-2.5 transition bg-white"
-                
                 disabled={isSubmitting}
-                
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -363,7 +379,6 @@ export default function LoginPage() {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
                 </svg>
-              
                 Continue with Google
               </Button>
 
@@ -377,7 +392,6 @@ export default function LoginPage() {
 
             {/* Feature Highlights Section */}
             <div className="mt-8 w-full space-y-4">
-              
               {/* Feature 1 */}
               <div className="flex items-center gap-4 rounded-full bg-white/70 backdrop-blur-sm border border-white/20 px-5 py-3.5 shadow-badge-blue w-full">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 border border-blue-100/50">
@@ -424,8 +438,28 @@ export default function LoginPage() {
         .animate-float-slow {
           animation: float-slow 6s ease-in-out infinite;
         }
+
+        @keyframes float {
+          0% {
+            transform: translateY(0px) translateX(0px);
+          }
+          25% {
+            transform: translateY(-5px) translateX(2px);
+          }
+          50% {
+            transform: translateY(-8px) translateX(0px);
+          }
+          75% {
+            transform: translateY(-4px) translateX(-2px);
+          }
+          100% {
+            transform: translateY(0px) translateX(0px);
+          }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
       `}</style>
     </>
   );
 }
-
