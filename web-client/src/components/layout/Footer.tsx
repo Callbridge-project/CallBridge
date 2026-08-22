@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Globe, Share2, Network } from "lucide-react";
 import footerLogoImg from "@/assets/images/footer-logo.png";
+import footerAndroidLogo from "@/assets/footerandroid.svg"
 
 interface FooterLink {
   label: string;
@@ -96,10 +97,10 @@ export default function Footer() {
                       className="inline-flex items-center bg-footer-btn-gradient hover:opacity-90 text-white text-sm font-normal px-6 md:px-8 py-3 rounded-full shadow-[0_4px_16px_rgba(37,99,235,0.15)] active:scale-98 transition-all duration-200 h-14"
                     >
                       {/* Inline SVG Android Logo */}
-                      <svg className="h-4 w-4 fill-current mr-2.5" viewBox="0 0 24 24">
+                      <img src={footerAndroidLogo} alt="Android Logo" className="h-4 w-5 mr-2" />
                         <path d="M17.52 11.2c-.07-.07-.15-.1-.24-.1h-1.3c-.09 0-.17.03-.24.1L12 15.02l-3.74-3.82c-.07-.07-.15-.1-.24-.1H6.72c-.09 0-.17.03-.24.1L2.2 15.5c-.07.07-.1.15-.1.24v6.02c0 .09.03.17.1.24l2.12 2.12c.07.07.15.1.24.1h14.88c.09 0 .17-.03.24-.1l2.12-2.12c.07-.07.1-.15.1-.24v-6.02c0-.09-.03-.17-.1-.24l-4.28-4.28z" />
                         <path d="M20 7.8c0-1-.8-1.8-1.8-1.8h-1.4l1.2-2.1c.2-.3.1-.7-.2-.9-.3-.2-.7-.1-.9.2L15.6 5.5c-1.1-.5-2.3-.7-3.6-.7s-2.5.2-3.6.7L7.1 3.2C6.9 2.9 6.5 2.8 6.2 3c-.3.2-.4.6-.2.9L7.2 6H5.8C4.8 6 4 6.8 4 7.8v7.2h16V7.8z" />
-                      </svg>
+                
                       Download APK
                     </a>
                   </div>

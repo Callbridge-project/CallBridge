@@ -19,7 +19,9 @@ import {
   Shield,
   LifeBuoy,
   Key,
-  Headphones
+  Headphones,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -38,6 +40,14 @@ import {
 
 // Local asset mockups
 import supportInterfaceImg from "@/assets/images/Support Interface.png";
+
+// SVG Asset Imports for Section 3
+import apk from "../../assets/apk.svg";
+import login from "../../assets/login.svg";
+import publicguide from "../../assets/publicguide.svg";
+import troubleshoot from "../../assets/troubleshoot.svg";
+import publicconnect from "../../assets/publicconnect.svg";
+import publicsms from "../../assets/publicsms.svg";
 
 // ── CONFIGURATIONS FOR MODULAR MAPS ──────────────────────────────────────
 
@@ -60,6 +70,39 @@ const issuePills = [
   "Sync",
   "SMS Help",
   "Permission Guide"
+];
+
+const topics = [
+  {
+    icon: apk,
+    title: 'APK Help',
+    description: 'Step-by-step installation guides and package management for Android devices.',
+  },
+  {
+    icon: login,
+    title: 'Login Assistance',
+    description: 'Password resets, and account recovery.',
+  },
+  {
+    icon: publicguide,
+    title: 'Permissions Guide',
+    description: 'Managing accessibility services and system-level permissions for full monitoring.',
+  },
+  {
+    icon: troubleshoot,
+    title: 'Troubleshooting',
+    description: 'Resolving common sync errors, dashboard mismatches, and network lags.',
+  },
+  {
+    icon: publicconnect,
+    title: 'Connection Issues',
+    description: 'Improving device synchronization stability.',
+  },
+  {
+    icon: publicsms,
+    title: 'SMS Help',
+    description: 'Capture and synchronizeencrypted messages through the mobile apps ',
+  },
 ];
 
 const faqs = [
@@ -126,6 +169,39 @@ export default function ContactPage() {
 
   // FAQ State
   const [openFAQIndex, setOpenFAQIndex] = useState<number | null>(null);
+
+  // Section 3 Auto-Scroll State & Hooks
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const scrollTopics = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      const scrollAmount = clientWidth;
+
+      if (direction === 'right') {
+        if (scrollLeft + clientWidth >= scrollWidth - 10) {
+          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+      } else {
+        if (scrollLeft <= 0) {
+          scrollRef.current.scrollTo({ left: scrollWidth, behavior: 'smooth' });
+        } else {
+          scrollRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (isHovered) return;
+    const interval = setInterval(() => {
+      scrollTopics('right');
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [isHovered]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -430,42 +506,62 @@ export default function ContactPage() {
 
       {/* ── SECTION 3: BROWSE BY TOPIC ─────────────────────────────────── */}
       <section className="w-full px-6 lg:px-16 py-20 bg-white">
-        <div className="max-w-7xl mx-auto text-center space-y-12">
+        <div className="max-w-7xl mx-auto space-y-12">
           
-          <div className="space-y-3">
-            <h2 className="text-3xl font-semibold text-marketing-dark tracking-tight">We solve all the following and more</h2>
-            <p className="text-marketing-light text-sm font-normal max-w-md mx-auto">
-              Instant solutions for every technical layer of the CallBridge ecosystem.
-            </p>
+          {/* Header with Scroll Controls */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-3 text-center w-full">
+              <h2 className="text-3xl font-semibold text-marketing-dark tracking-tight">
+                We solve all the following and more
+              </h2>
+              <p className="text-marketing-light text-sm font-normal mx-auto max-w-md">
+                Instant solutions for every technical layer of the CallBridge ecosystem.
+              </p>
+            </div>
+
+            {/* Scroll Navigation Buttons */}
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={() => scrollTopics('left')}
+                className="h-10 w-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-marketing-dark hover:bg-slate-50 transition-colors shadow-sm"
+                aria-label="Scroll Left"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => scrollTopics('right')}
+                className="h-10 w-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-marketing-dark hover:bg-slate-50 transition-colors shadow-sm"
+                aria-label="Scroll Right"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
-          {/* Row 1: Large Topics matching Figma UI 4th Image */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-            {/* APK Help Card */}
-            <div className="bg-white border-l-4 border-l-primary border border-slate-100/50 rounded-r-[32px] rounded-l-[4px] p-8 flex items-start gap-4 shadow-sm">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <Smartphone className="h-5 w-5" />
+          {/* Carousel Scroll Container */}
+          <div
+            ref={scrollRef}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className="flex gap-6 overflow-x-auto scrollbar-none snap-x snap-mandatory py-4 text-left"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {topics.map((item, index) => (
+              <div
+                key={index}
+                className="w-full md:w-[calc(50%-12px)] shrink-0 snap-start bg-white border-l-4 border-l-primary border border-slate-100/80 rounded-r-[32px] rounded-l-[4px] p-8 flex items-start gap-4 shadow-sm hover:shadow-md transition-all"
+              >
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <img src={item.icon} alt={item.title} className="h-5 w-5 object-contain" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-base font-semibold text-marketing-dark">{item.title}</h4>
+                  <p className="text-xs text-marketing-light leading-relaxed font-normal">
+                    {item.description}
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <h4 className="text-base font-semibold text-marketing-dark">APK Help</h4>
-                <p className="text-m-xs text-marketing-light leading-relaxed font-normal">
-                  Step-by-step installation guides and package management for Android devices.
-                </p>
-              </div>
-            </div>
-
-            {/* Login Assistance Card */}
-            <div className="bg-white border-l-4 border-l-primary border border-slate-100/50 rounded-r-[32px] rounded-l-[4px] p-8 flex items-start gap-4 shadow-sm">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <Key className="h-5 w-5" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-base font-semibold text-marketing-dark">Login Assistance</h4>
-                <p className="text-m-xs text-marketing-light leading-relaxed font-normal">
-                  Password resets, and account recovery.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
 
         </div>

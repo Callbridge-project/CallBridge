@@ -7,11 +7,14 @@ import io.appwrite.services.Databases
 
 object AppwriteClient {
 
+    private var isInitialized = false
     lateinit var client: Client
     lateinit var databases: Databases
     lateinit var account: Account
 
     fun initialize(context: Context) {
+        if (isInitialized) return
+        
         // BuildConfig is generated in com.callbridge.app.BuildConfig
         client = Client(context)
             .setEndpoint(BuildConfig.APPWRITE_ENDPOINT)
@@ -19,5 +22,7 @@ object AppwriteClient {
 
         databases = Databases(client)
         account = Account(client)
+        
+        isInitialized = true
     }
 }

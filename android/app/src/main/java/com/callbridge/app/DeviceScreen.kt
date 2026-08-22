@@ -57,6 +57,7 @@ fun DeviceScreen() {
     val greenBg = Color(0xFFE8F5E9)
     val blueBg = Color(0xFFEEF4FF)
     val androidGreen = Color(0xFF3DDC84)
+    val transparent = Color(0xFFF3F4F6)
 
     // ── State ─────────────────────────────────────────────────────
     var deviceInfo by remember { mutableStateOf(DeviceInfo()) }
@@ -87,7 +88,11 @@ fun DeviceScreen() {
 
                     val monitoringStatus = doc.data["monitoring_status"] as? Boolean ?: true
                     val lastSyncRaw = doc.data["last_sync"]?.toString() ?: ""
+                    val localLastSync = prefs.getString("last_device_sync_time", "")
                     val registeredRaw = doc.data["device_registered_at"]?.toString() ?: ""
+
+                    android.util.Log.d("CallBridge", "DeviceScreen: registeredRaw=$registeredRaw")
+
                     val storedDeviceName = doc.data["device_name"]?.toString()
                         ?: "$manufacturer $model"
                     val storedAndroid = doc.data["android_version"]?.toString() ?: androidVer
@@ -99,8 +104,8 @@ fun DeviceScreen() {
                         androidVersion = storedAndroid,
                         appVersion = storedAppVersion,
                         monitoringActive = monitoringStatus,
-                        lastSync = formatTimestamp(lastSyncRaw),
-                        registeredAt = formatFullDate2(registeredRaw),
+                        lastSync = formatTimestamp(lastSyncRaw),           // TimeUtils version
+                        registeredAt = formatFullDate(registeredRaw),      // TimeUtils version — NOT formatFullDate2
                         manufacturer = manufacturer,
                         model = model,
                         ramGb = ramGb,
@@ -129,7 +134,7 @@ fun DeviceScreen() {
                     androidVersion = androidVer,
                     appVersion = BuildConfig.VERSION_NAME,
                     monitoringActive = true,
-                    lastSync = "—",
+                    lastSync = "Just now",
                     registeredAt = "—",
                     manufacturer = manufacturer,
                     model = model,
@@ -158,22 +163,7 @@ fun DeviceScreen() {
                 .background(screenBg)
                 .padding(top = 16.dp, bottom = 12.dp, start = 16.dp, end = 16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(white)
-                    .shadow(2.dp, CircleShape)
-                    .align(Alignment.CenterStart),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = android.R.drawable.ic_media_previous),
-                    contentDescription = "Back",
-                    tint = nearBlack,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
+
 
             Text(
                 text = "Device",
@@ -236,7 +226,7 @@ fun DeviceScreen() {
                         ) {
                             Icon(
                                 painter = painterResource(
-                                    id = android.R.drawable.ic_menu_manage
+                                    id = R.drawable.maindevice
                                 ),
                                 contentDescription = null,
                                 tint = primaryBlue,
@@ -372,7 +362,7 @@ fun DeviceScreen() {
                 ) {
                     // Device Model
                     DeviceDetailRow(
-                        iconRes = android.R.drawable.ic_menu_manage,
+                        iconRes = R.drawable.model,
                         iconBg = Color(0xFFF5F7FA),
                         iconTint = mutedText,
                         title = "Device Model",
@@ -385,8 +375,8 @@ fun DeviceScreen() {
 
                     // Android Version
                     DeviceDetailRow(
-                        iconRes = android.R.drawable.ic_menu_manage,
-                        iconBg = Color(0xFFE8F5E9),
+                        iconRes = R.drawable.greenandroid,
+                        iconBg = Color(0xFFEDFDF1),
                         iconTint = androidGreen,
                         title = "Android Version",
                         value = "${deviceInfo.androidVersion} (${deviceInfo.androidCodename})",
@@ -399,7 +389,7 @@ fun DeviceScreen() {
 
                     // Manufacturer
                     DeviceDetailRow(
-                        iconRes = android.R.drawable.ic_menu_sort_by_size,
+                        iconRes = R.drawable.manufacture,
                         iconBg = Color(0xFFF5F7FA),
                         iconTint = Color(0xFF4A5568),
                         title = "Manufacturer",
@@ -411,17 +401,7 @@ fun DeviceScreen() {
                     )
 
                     // App Version
-                    DeviceDetailRow(
-                        iconRes = android.R.drawable.ic_dialog_info,
-                        iconBg = blueBg,
-                        iconTint = primaryBlue,
-                        title = "App Version",
-                        value = "CallBridge v${deviceInfo.appVersion}",
-                        nearBlack = nearBlack,
-                        mutedText = mutedText,
-                        cardBorder = cardBorder,
-                        showDivider = true
-                    )
+
 
                     // Registered Since
                     DeviceDetailRow(
@@ -548,28 +528,5 @@ fun getAndroidCodename(sdkInt: Int): String {
     }
 }
 
-fun formatFullDate2(isoTimestamp: String): String {
-    return try {
-        val instant = java.time.Instant.parse(isoTimestamp)
-        val sdf = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
-        sdf.format(Date.from(instant))
-    } catch (e: Exception) {
-        "—"
-    }
-}
 
-private fun formatTimestamp(isoTimestamp: String): String {
-    return try {
-        val instant = java.time.Instant.parse(isoTimestamp)
-        val now = java.time.Instant.now()
-        val diffSeconds = now.epochSecond - instant.epochSecond
-        when {
-            diffSeconds < 60 -> "Just now"
-            diffSeconds < 3600 -> "${diffSeconds / 60}m ago"
-            diffSeconds < 86400 -> "${diffSeconds / 3600}h ago"
-            else -> SimpleDateFormat("MMM d", Locale.getDefault()).format(Date.from(instant))
-        }
-    } catch (e: Exception) {
-        "—"
-    }
-}
+

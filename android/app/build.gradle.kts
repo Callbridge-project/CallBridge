@@ -28,7 +28,7 @@ android {
 
         // Helper to ensure properties from local.properties are correctly quoted for BuildConfig
         fun getBuildConfigValue(key: String): String {
-            val value = localProps.getProperty(key, "").replace("\"", "")
+            val value = localProps.getProperty(key, "").replace("\"", "").trim()
             return "\"$value\""
         }
 

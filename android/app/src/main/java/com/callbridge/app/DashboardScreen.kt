@@ -154,28 +154,36 @@ fun DashboardScreen() {
 
                     // Convert the Appwrite doc data to our typed class
                     val deviceData = doc.convertTo(DeviceDocument::class.java)
+                    val rawData = doc.data
 
-                    if (deviceData != null) {
-                        deviceName = deviceData.deviceName.ifEmpty {
-                            val manufacturer = android.os.Build.MANUFACTURER
-                            val model = android.os.Build.MODEL
-                            if (model.startsWith(manufacturer, ignoreCase = true)) {
-                                model
-                            } else {
-                                "${manufacturer.replaceFirstChar { it.uppercase() }} $model"
-                            }
-                        }
-                        androidVersion = "Android ${deviceData.androidVersion.ifEmpty {
-                            android.os.Build.VERSION.RELEASE
-                        }}"
-                        lastSync = if (deviceData.lastSync.isNotEmpty()) {
-                            formatTimestamp(deviceData.lastSync)
+                    android.util.Log.d(LogTag, "Parsed Device Data: $deviceData")
+
+                    val finalDeviceName = deviceData?.deviceName ?: rawData["device_name"]?.toString() ?: ""
+                    val finalAndroidVersion = deviceData?.androidVersion ?: rawData["android_version"]?.toString() ?: ""
+                    val finalLastSync = deviceData?.lastSync ?: rawData["last_sync"]?.toString() ?: ""
+                    val localLastSync = prefs.getString("last_device_sync_time", "")
+
+                    deviceName = finalDeviceName.ifEmpty {
+                        val manufacturer = android.os.Build.MANUFACTURER
+                        val model = android.os.Build.MODEL
+                        if (model.startsWith(manufacturer, ignoreCase = true)) {
+                            model
                         } else {
-                            "Never synced"
+                            "${manufacturer.replaceFirstChar { it.uppercase() }} $model"
                         }
-
-                        android.util.Log.d(LogTag, "Device info loaded: $deviceName")
                     }
+                    
+                    androidVersion = "Android ${finalAndroidVersion.ifEmpty {
+                        android.os.Build.VERSION.RELEASE
+                    }}"
+                    
+                    lastSync = if (finalLastSync.isNotEmpty() || !localLastSync.isNullOrEmpty()) {
+                        formatTimestamp(finalLastSync.ifEmpty { localLastSync })
+                    } else {
+                        "Never synced"
+                    }
+
+                    android.util.Log.d(LogTag, "Device info loaded: $deviceName, lastSync: $lastSync")
                 } catch (e: Exception) {
                     android.util.Log.e(LogTag, "Failed to load Appwrite device doc: ${e.message}")
                     deviceName = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
@@ -593,36 +601,7 @@ fun DashboardScreen() {
                 }
             }
 
-            // Details
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(white)
-                    .border(1.dp, cardBorder, RoundedCornerShape(14.dp))
-                    .clickable { }
-                    .padding(18.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        painter = painterResource(id = android.R.drawable.ic_dialog_info),
-                        contentDescription = "Details",
-                        tint = nearBlack,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = "Details",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = nearBlack
-                    )
-                }
-            }
+
         }
         Spacer(modifier = Modifier.height(8.dp))
     }
@@ -703,7 +682,7 @@ fun ActivityRow(
 ) {
     val style = when {
         item.type.contains("missed") -> ActivityStyle(R.drawable.missedcall, Color(0xFFFFEBEE), Color(0xFFE53935), "Missed Call")
-        item.type.contains("incoming") -> ActivityStyle(R.drawable.answeredcall, Color(0xFFE8F5E9), Color(0xFF2E7D32), "Incoming Call")
+        item.type.contains("incoming") -> ActivityStyle(R.drawable.answeredcall, Color(0xFFF0FDF4), Color(0xFF10B981), "Incoming Call")
         item.type.contains("sms_received") -> ActivityStyle(R.drawable.unreadsms, Color(0xFFE3F2FD), Color(0xFF3B82F6), "SMS Received")
         item.type.contains("sms_sent") -> ActivityStyle(R.drawable.readsms, Color(0xFFF3E5F5), Color(0xFF7B1FA2), "SMS Sent")
         else -> ActivityStyle(android.R.drawable.ic_menu_call, Color(0xFFEEF4FF), Color(0xFF1A3A6B), item.type.replace("_", " "))
@@ -784,19 +763,7 @@ private fun <T> io.appwrite.models.Document<*>.convertTo(clazz: Class<T>): T? {
 }
 
 // ── Time formatters ───────────────────────────────────────────────
-private fun formatTimestamp(isoTimestamp: String): String {
-    return try {
-        val instant = java.time.Instant.parse(isoTimestamp)
-        val now = java.time.Instant.now()
-        val diffSeconds = now.epochSecond - instant.epochSecond
-        when {
-            diffSeconds < 60 -> "Just now"
-            diffSeconds < 3600 -> "${diffSeconds / 60}m ago"
-            diffSeconds < 86400 -> "${diffSeconds / 3600}h ago"
-            else -> SimpleDateFormat("MMM d", Locale.getDefault()).format(Date.from(instant))
-        }
-    } catch (_: Exception) { "—" }
-}
+
 
 private fun formatTimeOnly(isoTimestamp: String): String {
     return try {
