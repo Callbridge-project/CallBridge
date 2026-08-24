@@ -1,5 +1,6 @@
 package com.callbridge.app
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -23,6 +24,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         NotificationHelper.createNotificationChannel(this)
         AppwriteClient.initialize(applicationContext)

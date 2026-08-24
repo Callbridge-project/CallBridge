@@ -49,9 +49,9 @@ fun CallsScreen() {
     val screenBg = Color(0xFFF2F4F7)
     val white = Color.White
     val missedRed = Color(0xFFE53935)
-    val answeredGreen = Color(0xFF2E7D32)
+    val answeredGreen = Color(0xFF22C55E)
     val missedBg = Color(0xFFFFEBEE)
-    val answeredBg = Color(0xFFE8F5E9)
+    val answeredBg = Color(0xFFF0FDF4)
 
     // ── State ─────────────────────────────────────────────────────
     var selectedTab by remember { mutableStateOf("all") } // "all" or "missed"

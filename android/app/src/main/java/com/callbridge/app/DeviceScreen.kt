@@ -3,6 +3,12 @@ package com.callbridge.app
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -12,20 +18,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.text.SimpleDateFormat
-import java.util.*
 
 data class DeviceInfo(
     val deviceName: String = "",
@@ -40,12 +46,12 @@ data class DeviceInfo(
     val androidCodename: String = ""
 )
 
+
 @Composable
 fun DeviceScreen() {
 
     val context = LocalContext.current
 
-    // ── Colors ────────────────────────────────────────────────────
     val primaryBlue = Color(0xFF4A90D9)
     val deepBlue = Color(0xFF1A3A6B)
     val nearBlack = Color(0xFF0A0A1A)
@@ -58,24 +64,51 @@ fun DeviceScreen() {
     val blueBg = Color(0xFFEEF4FF)
     val androidGreen = Color(0xFF3DDC84)
 
-    // ── State ─────────────────────────────────────────────────────
     var deviceInfo by remember { mutableStateOf(DeviceInfo()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // ── Load device data ──────────────────────────────────────────
+    val infiniteTransition = rememberInfiniteTransition(label = "pulseTransition")
+
+// Animate dot scale
+    val dotScale by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = LinearOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "dotScale"
+    )
+
+// Animate dot opacity
+    val dotAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = LinearOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "dotAlpha"
+    )
+
     LaunchedEffect(Unit) {
         try {
-            val prefs = context.getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
-            val deviceDocId = prefs.getString("registered_device_id", null)
+            val manufacturer = Build.MANUFACTURER.trim().replaceFirstChar { it.uppercase() }
+            val model = Build.MODEL.trim()
+            val deviceNameLocal = if (model.lowercase()
+                    .startsWith(manufacturer.lowercase())) model
+            else "$manufacturer $model"
 
-            // Always read local device info from Build constants
-            val manufacturer = Build.MANUFACTURER.replaceFirstChar { it.uppercase() }
-            val model = Build.MODEL
             val androidVer = Build.VERSION.RELEASE
             val codename = getAndroidCodename(Build.VERSION.SDK_INT)
             val ramGb = getDeviceRam(context)
 
-            if (deviceDocId != null) {
+            val prefs = context.getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
+            val deviceDocId = prefs.getString("registered_device_id", null)
+
+            android.util.Log.d("CallBridge", "DeviceScreen: deviceDocId='$deviceDocId'")
+
+            if (deviceDocId != null && deviceDocId.isNotEmpty()) {
                 try {
                     val doc = AppwriteClient.databases.getDocument(
                         databaseId = BuildConfig.APPWRITE_DATABASE_ID,
@@ -83,38 +116,50 @@ fun DeviceScreen() {
                         documentId = deviceDocId
                     )
 
-                    android.util.Log.d("CallBridge", "Device doc: ${doc.data}")
+                    // Log every field so we can see what Appwrite returns
+                    android.util.Log.d("CallBridge", "DeviceScreen doc.data = ${doc.data}")
 
+                    val rawLastSync = extractDateString(doc.data["last_sync"])
+                    val rawRegisteredAt = extractDateString(doc.data["device_registered_at"])
+
+                    android.util.Log.d("CallBridge", "rawLastSync = '$rawLastSync'")
+                    android.util.Log.d("CallBridge", "rawRegisteredAt = '$rawRegisteredAt'")
+
+                    val formattedSync = formatTimestamp(rawLastSync)
+                    val formattedRegistered = formatFullDate(rawRegisteredAt)
+
+                    android.util.Log.d("CallBridge", "formattedSync = '$formattedSync'")
+                    android.util.Log.d("CallBridge", "formattedRegistered = '$formattedRegistered'")
+
+                    val storedDeviceName = extractDateString(doc.data["device_name"])
+                        .ifEmpty { deviceNameLocal }
+                    val storedAndroid = extractDateString(doc.data["android_version"])
+                        .ifEmpty { androidVer }
+                    val storedApp = extractDateString(doc.data["app_version"])
+                        .ifEmpty { BuildConfig.VERSION_NAME }
                     val monitoringStatus = doc.data["monitoring_status"] as? Boolean ?: true
-                    val lastSyncRaw = doc.data["last_sync"]?.toString() ?: ""
-                    val registeredRaw = doc.data["device_registered_at"]?.toString() ?: ""
-                    val storedDeviceName = doc.data["device_name"]?.toString()
-                        ?: "$manufacturer $model"
-                    val storedAndroid = doc.data["android_version"]?.toString() ?: androidVer
-                    val storedAppVersion = doc.data["app_version"]?.toString()
-                        ?: BuildConfig.VERSION_NAME
 
                     deviceInfo = DeviceInfo(
                         deviceName = storedDeviceName,
                         androidVersion = storedAndroid,
-                        appVersion = storedAppVersion,
+                        appVersion = storedApp,
                         monitoringActive = monitoringStatus,
-                        lastSync = formatTimestamp(lastSyncRaw),
-                        registeredAt = formatFullDate2(registeredRaw),
+                        lastSync = formattedSync,
+                        registeredAt = formattedRegistered,
                         manufacturer = manufacturer,
                         model = model,
                         ramGb = ramGb,
                         androidCodename = codename
                     )
+
                 } catch (e: Exception) {
-                    android.util.Log.e("CallBridge", "Device fetch error: ${e.message}")
-                    // Fall back to local device info
+                    android.util.Log.e("CallBridge", "DeviceScreen fetch error: ${e.message}")
                     deviceInfo = DeviceInfo(
-                        deviceName = "$manufacturer $model",
+                        deviceName = deviceNameLocal,
                         androidVersion = androidVer,
                         appVersion = BuildConfig.VERSION_NAME,
                         monitoringActive = true,
-                        lastSync = "Just now",
+                        lastSync = "—",
                         registeredAt = "—",
                         manufacturer = manufacturer,
                         model = model,
@@ -123,9 +168,9 @@ fun DeviceScreen() {
                     )
                 }
             } else {
-                // No Appwrite document yet — use local constants only
+                android.util.Log.w("CallBridge", "DeviceScreen: no deviceDocId in prefs")
                 deviceInfo = DeviceInfo(
-                    deviceName = "$manufacturer $model",
+                    deviceName = deviceNameLocal,
                     androidVersion = androidVer,
                     appVersion = BuildConfig.VERSION_NAME,
                     monitoringActive = true,
@@ -144,36 +189,18 @@ fun DeviceScreen() {
         }
     }
 
-    // ── UI ────────────────────────────────────────────────────────
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(screenBg)
+            .background(Color(0xFFF2F4F7))
     ) {
-
-        // ── Top App Bar ───────────────────────────────────────────
+        // Top bar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(screenBg)
+                .background(Color(0xFFF2F4F7))
                 .padding(top = 16.dp, bottom = 12.dp, start = 16.dp, end = 16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(white)
-                    .shadow(2.dp, CircleShape)
-                    .align(Alignment.CenterStart),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = android.R.drawable.ic_media_previous),
-                    contentDescription = "Back",
-                    tint = nearBlack,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
 
             Text(
                 text = "Device",
@@ -185,10 +212,7 @@ fun DeviceScreen() {
         }
 
         if (isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = primaryBlue, strokeWidth = 2.dp)
             }
         } else {
@@ -198,26 +222,18 @@ fun DeviceScreen() {
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp)
             ) {
-
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // ── Main Device Card ──────────────────────────────
+                // Main device card
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(
-                            elevation = 6.dp,
-                            shape = RoundedCornerShape(20.dp),
-                            ambientColor = Color.Black.copy(alpha = 0.06f),
-                            spotColor = Color.Black.copy(alpha = 0.04f)
-                        )
+                        .shadow(6.dp, RoundedCornerShape(20.dp),
+                            ambientColor = Color.Black.copy(0.06f))
                         .clip(RoundedCornerShape(20.dp))
                         .background(
                             brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    white,
-                                    Color(0xFFF8FAFF)
-                                )
+                                colors = listOf(Color.White, Color(0xFFF8FAFF))
                             )
                         )
                         .padding(20.dp)
@@ -226,7 +242,6 @@ fun DeviceScreen() {
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Device icon badge
                         Box(
                             modifier = Modifier
                                 .size(64.dp)
@@ -236,7 +251,7 @@ fun DeviceScreen() {
                         ) {
                             Icon(
                                 painter = painterResource(
-                                    id = android.R.drawable.ic_menu_manage
+                                    id = R.drawable.settdevice
                                 ),
                                 contentDescription = null,
                                 tint = primaryBlue,
@@ -247,18 +262,14 @@ fun DeviceScreen() {
                         Spacer(modifier = Modifier.width(16.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
-                            // Device name
                             Text(
-                                text = deviceInfo.deviceName,
+                                text = deviceInfo.deviceName.ifEmpty { "Unknown Device" },
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = nearBlack,
                                 lineHeight = 26.sp
                             )
-
                             Spacer(modifier = Modifier.height(4.dp))
-
-                            // Android version and RAM
                             Text(
                                 text = "ANDROID ${deviceInfo.androidVersion} • ${deviceInfo.ramGb} RAM",
                                 fontSize = 11.sp,
@@ -266,54 +277,41 @@ fun DeviceScreen() {
                                 fontWeight = FontWeight.Medium,
                                 letterSpacing = 0.5.sp
                             )
-
                             Spacer(modifier = Modifier.height(10.dp))
 
-                            // Status pills row
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            // Monitoring pill
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(greenBg)
+                                    .border(1.dp, green.copy(0.3f), RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
                             ) {
-                                // Monitoring status pill
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(20.dp))
-                                        .background(greenBg)
-                                        .border(
-                                            1.dp,
-                                            green.copy(alpha = 0.3f),
-                                            RoundedCornerShape(20.dp)
-                                        )
-                                        .padding(horizontal = 10.dp, vertical = 5.dp)
-                                ) {
-                                    Text(
-                                        text = if (deviceInfo.monitoringActive)
-                                            "MONITORING ACTIVE"
-                                        else
-                                            "MONITORING PAUSED",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = green,
-                                        letterSpacing = 0.5.sp
-                                    )
-                                }
+                                Text(
+                                    text = if (deviceInfo.monitoringActive)
+                                        "MONITORING ACTIVE" else "MONITORING PAUSED",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = green,
+                                    letterSpacing = 0.5.sp
+                                )
                             }
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // Last synced pill
+                            // Last sync pill
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
                                     .background(blueBg)
-                                    .border(
-                                        1.dp,
-                                        primaryBlue.copy(alpha = 0.3f),
-                                        RoundedCornerShape(20.dp)
-                                    )
+                                    .border(1.dp, primaryBlue.copy(0.3f), RoundedCornerShape(20.dp))
                                     .padding(horizontal = 10.dp, vertical = 5.dp)
                             ) {
                                 Text(
-                                    text = "LAST SYNCED ${deviceInfo.lastSync.uppercase()}",
+                                    text = if (deviceInfo.lastSync == "—" || deviceInfo.lastSync.isEmpty())
+                                        "NOT YET SYNCED"
+                                    else
+                                        "LAST SYNCED ${deviceInfo.lastSync.uppercase()}",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = primaryBlue,
@@ -322,20 +320,25 @@ fun DeviceScreen() {
                             }
                         }
 
-                        // Online green dot — top right
+                        // Online dot
                         Box(
                             modifier = Modifier
-                                .size(12.dp)
+                                .size(8.dp)
+                                .align(Alignment.Top)
+                                .graphicsLayer {
+                                    scaleX = dotScale
+                                    scaleY = dotScale
+                                    alpha = dotAlpha
+                                }
                                 .clip(CircleShape)
                                 .background(Color(0xFF4CAF50))
-                                .align(Alignment.Top)
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                // ── Device Details Section Header ─────────────────
+                // Section header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -358,34 +361,28 @@ fun DeviceScreen() {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // ── Details Card ──────────────────────────────────
+                // Details card
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(
-                            elevation = 3.dp,
-                            shape = RoundedCornerShape(18.dp),
-                            ambientColor = Color.Black.copy(alpha = 0.05f)
-                        )
+                        .shadow(3.dp, RoundedCornerShape(18.dp),
+                            ambientColor = Color.Black.copy(0.05f))
                         .clip(RoundedCornerShape(18.dp))
-                        .background(white)
+                        .background(Color.White)
                 ) {
-                    // Device Model
                     DeviceDetailRow(
-                        iconRes = android.R.drawable.ic_menu_manage,
+                        iconRes = R.drawable.model,
                         iconBg = Color(0xFFF5F7FA),
                         iconTint = mutedText,
                         title = "Device Model",
-                        value = deviceInfo.model,
+                        value = deviceInfo.model.ifEmpty { "—" },
                         nearBlack = nearBlack,
                         mutedText = mutedText,
                         cardBorder = cardBorder,
                         showDivider = true
                     )
-
-                    // Android Version
                     DeviceDetailRow(
-                        iconRes = android.R.drawable.ic_menu_manage,
+                        iconRes = R.drawable.apkversion,
                         iconBg = Color(0xFFE8F5E9),
                         iconTint = androidGreen,
                         title = "Android Version",
@@ -393,39 +390,21 @@ fun DeviceScreen() {
                         nearBlack = nearBlack,
                         mutedText = mutedText,
                         cardBorder = cardBorder,
-                        showDivider = true,
-                        useAndroidIcon = true
+                        showDivider = true
                     )
-
-                    // Manufacturer
                     DeviceDetailRow(
-                        iconRes = android.R.drawable.ic_menu_sort_by_size,
+                        iconRes = R.drawable.manufacture,
                         iconBg = Color(0xFFF5F7FA),
                         iconTint = Color(0xFF4A5568),
                         title = "Manufacturer",
-                        value = deviceInfo.manufacturer,
+                        value = deviceInfo.manufacturer.ifEmpty { "—" },
                         nearBlack = nearBlack,
                         mutedText = mutedText,
                         cardBorder = cardBorder,
                         showDivider = true
                     )
-
-                    // App Version
                     DeviceDetailRow(
-                        iconRes = android.R.drawable.ic_dialog_info,
-                        iconBg = blueBg,
-                        iconTint = primaryBlue,
-                        title = "App Version",
-                        value = "CallBridge v${deviceInfo.appVersion}",
-                        nearBlack = nearBlack,
-                        mutedText = mutedText,
-                        cardBorder = cardBorder,
-                        showDivider = true
-                    )
-
-                    // Registered Since
-                    DeviceDetailRow(
-                        iconRes = android.R.drawable.ic_menu_recent_history,
+                        iconRes = R.drawable.registered,
                         iconBg = Color(0xFFF5F7FA),
                         iconTint = mutedText,
                         title = "Registered Since",
@@ -443,7 +422,6 @@ fun DeviceScreen() {
     }
 }
 
-// ── Single device detail row ──────────────────────────────────────
 @Composable
 fun DeviceDetailRow(
     iconRes: Int,
@@ -454,8 +432,7 @@ fun DeviceDetailRow(
     nearBlack: Color,
     mutedText: Color,
     cardBorder: Color,
-    showDivider: Boolean,
-    useAndroidIcon: Boolean = false
+    showDivider: Boolean
 ) {
     Column {
         Row(
@@ -464,7 +441,6 @@ fun DeviceDetailRow(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon badge
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -479,97 +455,43 @@ fun DeviceDetailRow(
                     modifier = Modifier.size(20.dp)
                 )
             }
-
             Spacer(modifier = Modifier.width(14.dp))
-
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = nearBlack
-                )
+                Text(text = title, fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold, color = nearBlack)
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = value,
-                    fontSize = 13.sp,
-                    color = mutedText
-                )
+                Text(text = value, fontSize = 13.sp, color = mutedText)
             }
         }
-
         if (showDivider) {
             HorizontalDivider(
-                color = cardBorder,
-                thickness = 1.dp,
+                color = cardBorder, thickness = 1.dp,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
     }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────
 fun getDeviceRam(context: Context): String {
     return try {
-        val activityManager =
-            context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val memInfo = ActivityManager.MemoryInfo()
-        activityManager.getMemoryInfo(memInfo)
-        val totalRamGb = memInfo.totalMem / (1024.0 * 1024.0 * 1024.0)
-        val rounded = when {
-            totalRamGb <= 2.5 -> "2GB"
-            totalRamGb <= 3.5 -> "3GB"
-            totalRamGb <= 4.5 -> "4GB"
-            totalRamGb <= 6.5 -> "6GB"
-            totalRamGb <= 8.5 -> "8GB"
-            totalRamGb <= 10.5 -> "10GB"
-            totalRamGb <= 12.5 -> "12GB"
-            totalRamGb <= 16.5 -> "16GB"
-            else -> "${totalRamGb.toInt()}GB"
-        }
-        rounded
-    } catch (e: Exception) {
-        "—"
-    }
-}
-
-fun getAndroidCodename(sdkInt: Int): String {
-    return when (sdkInt) {
-        26, 27 -> "Oreo"
-        28 -> "Pie"
-        29 -> "Android 10"
-        30 -> "Android 11"
-        31, 32 -> "Snow Cone"
-        33 -> "Tiramisu"
-        34 -> "Upside Down Cake"
-        35 -> "Vanilla Ice Cream"
-        36 -> "Baklava"
-        else -> "Android $sdkInt"
-    }
-}
-
-fun formatFullDate2(isoTimestamp: String): String {
-    return try {
-        val instant = java.time.Instant.parse(isoTimestamp)
-        val sdf = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
-        sdf.format(Date.from(instant))
-    } catch (e: Exception) {
-        "—"
-    }
-}
-
-private fun formatTimestamp(isoTimestamp: String): String {
-    return try {
-        val instant = java.time.Instant.parse(isoTimestamp)
-        val now = java.time.Instant.now()
-        val diffSeconds = now.epochSecond - instant.epochSecond
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val mem = ActivityManager.MemoryInfo()
+        am.getMemoryInfo(mem)
+        val gb = mem.totalMem / (1024.0 * 1024.0 * 1024.0)
         when {
-            diffSeconds < 60 -> "Just now"
-            diffSeconds < 3600 -> "${diffSeconds / 60}m ago"
-            diffSeconds < 86400 -> "${diffSeconds / 3600}h ago"
-            else -> SimpleDateFormat("MMM d", Locale.getDefault()).format(Date.from(instant))
+            gb <= 2.5 -> "2GB"; gb <= 3.5 -> "3GB"; gb <= 4.5 -> "4GB"
+            gb <= 6.5 -> "6GB"; gb <= 8.5 -> "8GB"; gb <= 10.5 -> "10GB"
+            gb <= 12.5 -> "12GB"; gb <= 16.5 -> "16GB"
+            else -> "${gb.toInt()}GB"
         }
-    } catch (e: Exception) {
-        "—"
+    } catch (e: Exception) { "—" }
+}
+
+fun getAndroidCodename(sdk: Int): String {
+    return when (sdk) {
+        26, 27 -> "Oreo"; 28 -> "Pie"; 29 -> "Android 10"
+        30 -> "Android 11"; 31, 32 -> "Snow Cone"; 33 -> "Tiramisu"
+        34 -> "Upside Down Cake"; 35 -> "Vanilla Ice Cream"; 36 -> "Baklava"
+        else -> "Android $sdk"
     }
 }

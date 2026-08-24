@@ -22,21 +22,24 @@ object DeviceRegistrationService {
                 )
                 val deviceDocId = prefs.getString(PREFS_KEY_DEVICE_ID, null)
 
-                val deviceName = "${Build.MANUFACTURER} ${Build.MODEL}"
+                val manufacturer = Build.MANUFACTURER.trim()
+                val model = Build.MODEL.trim()
+                val deviceName = if (model.lowercase().startsWith(manufacturer.lowercase())) {
+                    model
+                } else {
+                    "$manufacturer $model"
+                }
+
                 val androidVersion = Build.VERSION.RELEASE
                 val appVersion = BuildConfig.VERSION_NAME
                 val now = java.time.Instant.now().toString()
 
-                // Check actual permission states on the device
                 val notificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     ContextCompat.checkSelfPermission(
                         context, android.Manifest.permission.POST_NOTIFICATIONS
                     ) == PackageManager.PERMISSION_GRANTED
-                } else {
-                    true
-                }
+                } else true
 
-                // Check if battery optimization is ignored
                 val powerManager = context.getSystemService(Context.POWER_SERVICE)
                         as android.os.PowerManager
                 val batteryOptIgnored = powerManager.isIgnoringBatteryOptimizations(
@@ -44,7 +47,6 @@ object DeviceRegistrationService {
                 )
 
                 if (deviceDocId == null) {
-                    // First time — create a new device document
                     val doc = AppwriteClient.databases.createDocument(
                         databaseId = BuildConfig.APPWRITE_DATABASE_ID,
                         collectionId = BuildConfig.APPWRITE_COLLECTION_DEVICES,
@@ -54,28 +56,37 @@ object DeviceRegistrationService {
                             "device_name" to deviceName,
                             "android_version" to androidVersion,
                             "app_version" to appVersion,
-                            "monitoring_active" to true,
                             "monitoring_status" to true,
+                            "notification_permission" to notificationPermission,
+                            "battery_optimization_ignored" to batteryOptIgnored,
                             "last_sync" to now,
                             "device_registered_at" to now
                         )
                     )
-                    prefs.edit().putString(PREFS_KEY_DEVICE_ID, doc.id).apply()
-                    Log.d(TAG, "DeviceRegistration: device registered id=${doc.id}")
+
+                    // Try both .id and .$id — log both so we know which works
+                    val savedId = doc.id.ifEmpty {
+                        doc.data["\$id"]?.toString() ?: ""
+                    }
+                    Log.d(TAG, "DeviceRegistration: doc.id='${doc.id}' data.\$id='${doc.data["\$id"]}'")
+                    Log.d(TAG, "DeviceRegistration: saving deviceDocId='$savedId'")
+
+                    prefs.edit().putString(PREFS_KEY_DEVICE_ID, savedId).apply()
+                    Log.d(TAG, "DeviceRegistration: registered with id=$savedId")
 
                 } else {
-                    // Already registered — update status fields
                     AppwriteClient.databases.updateDocument(
                         databaseId = BuildConfig.APPWRITE_DATABASE_ID,
                         collectionId = BuildConfig.APPWRITE_COLLECTION_DEVICES,
                         documentId = deviceDocId,
                         data = mapOf(
                             "last_sync" to now,
-                            "monitoring_active" to true,
-                            "monitoring_status" to true
+                            "monitoring_status" to true,
+                            "notification_permission" to notificationPermission,
+                            "battery_optimization_ignored" to batteryOptIgnored
                         )
                     )
-                    Log.d(TAG, "DeviceRegistration: device updated")
+                    Log.d(TAG, "DeviceRegistration: updated id=$deviceDocId")
                 }
 
             } catch (e: Exception) {
