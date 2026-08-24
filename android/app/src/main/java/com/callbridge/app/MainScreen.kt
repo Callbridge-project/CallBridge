@@ -97,7 +97,7 @@ fun MainScreen(onLogout: () -> Unit) {
                 "calls" -> CallsScreen()
                 "sms" -> SmsScreen()
                 "device" -> DeviceScreen()
-                "settings" -> SettingsScreen()
+                "settings" -> SettingsScreen(onLogout = onLogout)
             }
         }
     }

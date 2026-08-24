@@ -24,8 +24,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        NotificationHelper.createNotificationChannel(this)
-        AppwriteClient.initialize(applicationContext)
 
         // Request any permissions that have not been granted yet
         val permissionsNeeded = PermissionManager.getPermissionsToRequest(this)

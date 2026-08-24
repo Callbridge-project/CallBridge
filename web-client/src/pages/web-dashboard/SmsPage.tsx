@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CustomOnlyDateFilterComponent, DateFilterValue } from "@/components/shared/custom-only-date-filter";
+import smsicon from "@/assets/smsicon.svg";
 
 export default function SmsPage() {
   const { user } = useAuth();
@@ -576,7 +577,7 @@ export default function SmsPage() {
                 </p>
               </div>
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 border border-blue-100 text-primary">
-                <MessageSquare className="h-5 w-5" />
+                <img src={smsicon} alt="SMS Icon" className="h-5 w-5" />
               </div>
             </div>
 

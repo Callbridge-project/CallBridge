@@ -39,6 +39,16 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import phoneLaptopMockup from "@/assets/images/phone-laptop-mockup.png";
+import syshealth from "@/assets/Syshealth.svg";
+import dashAndroid from "@/assets/dash-android.png";
+import subcall from "@/assets/subcall.svg";
+import subsms from "@/assets/subsms.svg";
+import active from "@/assets/active.svg";
+import battery from "@/assets/battery.svg";
+import dashcall from "@/assets/dashcall.svg";
+import dashsms from "@/assets/dashsms.svg";
+import missedcall from "@/assets/missed.svg";
+import answeredcall from "@/assets/answered.svg";
 
 // Helper to format date relative to today
 const formatRelativeTime = (isoString: string) => {
@@ -598,9 +608,8 @@ export default function DashboardPage() {
           <div className="absolute inset-0 bg-white/[0.02] pointer-events-none" />
           
           <div className="flex items-center gap-4 z-10">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 border border-white/20 shadow-inner">
-              <Shield className="h-6 w-6 text-white" />
-            </div>
+            <img src={active} alt="Active Monitoring" className="h-12 w-12" />
+            
             <div className="min-w-0">
               <h3 className="text-lg font-bold tracking-tight">Device Monitoring Active</h3>
               <div className="flex flex-wrap items-center gap-3 mt-1 text-xs">
@@ -627,10 +636,11 @@ export default function DashboardPage() {
         {/* Customized Stat Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Card 1: Total Calls */}
-          <div className="relative overflow-hidden bg-white border border-dashboard-border/40 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-[20px] p-6 w-full flex flex-col justify-between transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.05)] h-[210px]">
+          <div className="relative overflow-hidden  bg-white border border-dashboard-border/40 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-[20px] p-6 w-full flex flex-col justify-between transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.05)] h-[210px]">
             <div className="flex items-center justify-between">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 border border-blue-100 text-primary">
-                <Phone className="h-5 w-5" />
+                <img src={dashcall} alt="dash call" className="h-5 w-5" />
+                
               </div>
               <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-primary border border-blue-100">+12%</span>
             </div>
@@ -651,7 +661,8 @@ export default function DashboardPage() {
           <div className="relative overflow-hidden bg-white border border-dashboard-border/40 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-[20px] p-6 w-full flex flex-col justify-between transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.05)] h-[210px]">
             <div className="flex items-center justify-between">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 border border-blue-100 text-primary">
-                <MessageSquare className="h-5 w-5" />
+                <img src={dashsms} alt="dash sms" className="h-5 w-5" />
+                
               </div>
               <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-primary border border-blue-100">
                 {unreadSMS > 0 ? `New (${unreadSMS})` : "New (4)"}
@@ -674,7 +685,8 @@ export default function DashboardPage() {
           <div className="relative overflow-hidden bg-white border border-dashboard-border/40 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-[20px] p-6 w-full flex flex-col justify-between transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.05)] h-[210px]">
             {/* Watermark smartphone */}
             <div className="absolute right-[-12px] bottom-[-12px] opacity-[0.025] text-slate-900 pointer-events-none">
-              <Smartphone className="h-32 w-32" />
+              <img src={dashAndroid} alt = "Dash Android" className="h-26 w-32" />
+            
             </div>
             <div className="flex items-center justify-between z-10">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 border border-amber-100 text-amber-600">
@@ -706,7 +718,8 @@ export default function DashboardPage() {
           <div className="relative overflow-hidden bg-white border border-dashboard-border/40 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-[20px] p-6 w-full flex flex-col justify-between transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.05)] h-[210px]">
             <div className="flex items-center justify-between">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 border border-amber-100 text-amber-600">
-                <Shield className="h-5 w-5" />
+                <img src={syshealth} alt="System Health" className="h-7 w-7" />
+    
               </div>
             </div>
             <div className="mt-auto">
@@ -740,7 +753,8 @@ export default function DashboardPage() {
               <div className="border border-dashboard-border/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl bg-white flex flex-col justify-between overflow-hidden p-6">
                 <div className="pb-3 flex flex-row items-center justify-between mb-3">
                   <h4 className="text-sm text-foreground flex items-center gap-2">
-                    <Phone className="h-4.5 w-4.5 text-primary" />
+                    <img src={subcall} alt="Subcall" className="h-4.5 w-4.5" />
+
                     Recent Calls
                   </h4>
                   <Link to="/calls" className="text-xs font-bold text-primary hover:underline transition flex items-center">
@@ -761,7 +775,7 @@ export default function DashboardPage() {
                             <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
                               isMissed ? "bg-rose-50 text-rose-500 border border-rose-100" : "bg-emerald-50 text-emerald-500 border border-emerald-100"
                             }`}>
-                              {isMissed ? <PhoneOff className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+                              {isMissed ? <img src={missedcall} alt="Missed Call" className="h-4 w-4" /> : <img src={answeredcall} alt="Answered Call" className="h-4 w-4" />}
                             </div>
                             
                             {renderContactItem(log.contact_name, log.caller_number || log.phone_number)}
@@ -782,7 +796,7 @@ export default function DashboardPage() {
               <div className="border border-dashboard-border/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl bg-white flex flex-col justify-between overflow-hidden p-6">
                 <div className="pb-3 flex flex-row items-center justify-between mb-3">
                   <h4 className="text-sm text-foreground flex items-center gap-2">
-                    <MessageSquare className="h-4.5 w-4.5 text-primary" />
+                    <img src={subsms} alt="Subsms" className="h-4.5 w-4.5" />
                     Recent SMS
                   </h4>
                   <Link to="/sms" className="text-xs font-bold text-primary hover:underline transition flex items-center">
@@ -843,7 +857,7 @@ export default function DashboardPage() {
             <div className="border border-dashboard-border/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)] bg-white rounded-3xl p-6 flex flex-col gap-4 mt-auto">
               <div className="flex gap-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 border border-blue-100 text-primary">
-                  <Smartphone className="h-5 w-5" />
+                 <img src={battery} alt="Battery" className="h-5 w-5" />
                 </div>
                 <div className="space-y-1">
                   <h4 className="text-sm font-bold text-slate-900">Background Stability Advisory</h4>

@@ -72,6 +72,8 @@ object AppwriteSyncService {
             val prefs = context.getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
             val userId = prefs.getString("current_user_id", "") ?: ""
             if (userId.isNotEmpty()) {
+                val now = java.time.Instant.now().toString()
+                prefs.edit().putString("last_device_sync_time", now).apply()
                 DeviceRegistrationService.registerOrUpdateDevice(context, userId)
             }
         }
@@ -125,6 +127,8 @@ object AppwriteSyncService {
             val prefs = context.getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
             val userId = prefs.getString("current_user_id", "") ?: ""
             if (userId.isNotEmpty()) {
+                val now = java.time.Instant.now().toString()
+                prefs.edit().putString("last_device_sync_time", now).apply()
                 DeviceRegistrationService.registerOrUpdateDevice(context, userId)
             }
         }

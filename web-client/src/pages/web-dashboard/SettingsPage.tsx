@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
+
 // Helper to check password strength
 const getPasswordStrength = (password: string) => {
   if (!password) return { score: 0, label: "", color: "bg-slate-200" };
