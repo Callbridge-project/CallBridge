@@ -30,6 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CustomOnlyDateFilterComponent, DateFilterValue } from "@/components/shared/custom-only-date-filter";
+import missedcall from "@/assets/missed.svg";
+import answeredcall from "@/assets/answered.svg";
 
 export default function CallsPage() {
   const { user } = useAuth();
@@ -623,7 +625,7 @@ export default function CallsPage() {
                               ? "bg-rose-50 text-rose-500 border border-rose-100" 
                               : "bg-emerald-50 text-emerald-500 border border-emerald-100"
                           }`}>
-                            {isMissed ? <Phone className="h-4.5 w-4.5 rotate-[135deg]" /> : <Phone className="h-4.5 w-4.5" />}
+                            {isMissed ? <img src={missedcall} alt="Missed Call" className="h-4 w-4" /> : <img src={answeredcall} alt="Answered Call" className="h-4 w-4" />}
                           </div>
 
                           {/* Caller Name and number stacked */}

@@ -718,7 +718,7 @@ export default function AppShell() {
             <div className="flex items-center gap-2 rounded-lg bg-primary/5 border border-primary/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary select-none">
               <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
               <span className="hidden xs:inline">Monitoring Active</span>
-              <span className="xs:hidden">Active</span>
+              <span className="xs:hidden">Monitoring Active</span>
             </div>
 
             {/* Vertical Divider 1 */}

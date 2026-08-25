@@ -123,6 +123,32 @@
   }
 }
 
+/* src/index.css */
+
+@layer utilities {
+  @keyframes float {
+    0% {
+      transform: translateY(0px) translateX(0px);
+    }
+    25% {
+      transform: translateY(-10px) translateX(7px);
+    }
+    50% {
+      transform: translateY(-13px) translateX(5px);
+    }
+    75% {
+      transform: translateY(-9px) translateX(-7px);
+    }
+    100% {
+      transform: translateY(0px) translateX(0px);
+    }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
 /* ── Top loader bar animation ────────────────────────────────────────────── */
 @keyframes cb-loader-slide {
   0%   { transform: translateX(-100%); }

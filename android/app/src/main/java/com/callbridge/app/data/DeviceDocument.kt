@@ -14,6 +14,7 @@ data class DeviceDocument(
 
     // Database types are Boolean. Ensure these match.
     @SerializedName("monitoring_status") val monitoringStatus: Boolean = false,
+    @SerializedName("monitoring_active") val monitoringActive: Boolean = false,
     @SerializedName("notification_permission") val notificationPermission: Boolean = false,
     @SerializedName("battery_optimization_ignored") val batteryOptimizationIgnored: Boolean = false,
 

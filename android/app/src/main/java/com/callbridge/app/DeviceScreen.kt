@@ -63,6 +63,7 @@ fun DeviceScreen() {
     val greenBg = Color(0xFFE8F5E9)
     val blueBg = Color(0xFFEEF4FF)
     val androidGreen = Color(0xFF3DDC84)
+    val transparent = Color(0xFFF3F4F6)
 
     var deviceInfo by remember { mutableStateOf(DeviceInfo()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -174,7 +175,7 @@ fun DeviceScreen() {
                     androidVersion = androidVer,
                     appVersion = BuildConfig.VERSION_NAME,
                     monitoringActive = true,
-                    lastSync = "—",
+                    lastSync = "Just now",
                     registeredAt = "—",
                     manufacturer = manufacturer,
                     model = model,

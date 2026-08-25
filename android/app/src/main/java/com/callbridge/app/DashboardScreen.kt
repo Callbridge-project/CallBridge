@@ -155,30 +155,36 @@ fun DashboardScreen() {
 
                     // Convert the Appwrite doc data to our typed class
                     val deviceData = doc.convertTo(DeviceDocument::class.java)
+                    val rawData = doc.data
 
-                    if (deviceData != null) {
-                        deviceName = deviceData.deviceName.ifEmpty {
-                            val manufacturer = android.os.Build.MANUFACTURER
-                            val model = android.os.Build.MODEL
-                            if (model.startsWith(manufacturer, ignoreCase = true)) {
-                                model
-                            } else {
-                                "${manufacturer.replaceFirstChar { it.uppercase() }} $model"
-                            }
-                        }
-                        androidVersion = "Android ${deviceData.androidVersion.ifEmpty {
-                            android.os.Build.VERSION.RELEASE
-                        }}"
+                    android.util.Log.d(LogTag, "Parsed Device Data: $deviceData")
 
-                        val lastSyncRaw = extractDateString(deviceData.lastSync)
-                        lastSync = if (lastSyncRaw.isNotEmpty()) {
-                            formatTimestamp(lastSyncRaw)
+                    val finalDeviceName = deviceData?.deviceName ?: rawData["device_name"]?.toString() ?: ""
+                    val finalAndroidVersion = deviceData?.androidVersion ?: rawData["android_version"]?.toString() ?: ""
+                    val finalLastSync = deviceData?.lastSync ?: rawData["last_sync"]?.toString() ?: ""
+                    val localLastSync = prefs.getString("last_device_sync_time", "")
+
+                    deviceName = finalDeviceName.ifEmpty {
+                        val manufacturer = android.os.Build.MANUFACTURER
+                        val model = android.os.Build.MODEL
+                        if (model.startsWith(manufacturer, ignoreCase = true)) {
+                            model
                         } else {
-                            "Never synced"
+                            "${manufacturer.replaceFirstChar { it.uppercase() }} $model"
                         }
-
-                        android.util.Log.d(LogTag, "Device info loaded: $deviceName")
                     }
+                    
+                    androidVersion = "Android ${finalAndroidVersion.ifEmpty {
+                        android.os.Build.VERSION.RELEASE
+                    }}"
+                    
+                    lastSync = if (finalLastSync.isNotEmpty() || !localLastSync.isNullOrEmpty()) {
+                        formatTimestamp(finalLastSync.ifEmpty { localLastSync })
+                    } else {
+                        "Never synced"
+                    }
+
+                    android.util.Log.d(LogTag, "Device info loaded: $deviceName, lastSync: $lastSync")
                 } catch (e: Exception) {
                     android.util.Log.e(LogTag, "Failed to load Appwrite device doc: ${e.message}")
                     deviceName = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"

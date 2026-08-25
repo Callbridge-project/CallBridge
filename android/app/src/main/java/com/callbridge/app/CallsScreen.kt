@@ -49,7 +49,7 @@ fun CallsScreen() {
     val screenBg = Color(0xFFF2F4F7)
     val white = Color.White
     val missedRed = Color(0xFFE53935)
-    val answeredGreen = Color(0xFF22C55E)
+    val answeredGreen = Color(0xFF10B981)
     val missedBg = Color(0xFFFFEBEE)
     val answeredBg = Color(0xFFF0FDF4)
 
