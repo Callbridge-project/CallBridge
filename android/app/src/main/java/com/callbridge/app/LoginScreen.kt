@@ -97,7 +97,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
             Image(
                 painter = painterResource(id = R.drawable.logo1),
                 contentDescription = "CallBridge Logo",
-                modifier = Modifier.size(380.dp)
+                modifier = Modifier.size(340.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -135,7 +135,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // EMAIL FIELD
             Text(
@@ -167,11 +167,11 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     unfocusedBorderColor = cardBorder,
                     focusedBorderColor = primaryBlue,
                     unfocusedContainerColor = white,
-                    focusedContainerColor = lightGray
+                    focusedContainerColor = white
                 )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // PASSWORD FIELD
             Text(
@@ -221,7 +221,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     unfocusedBorderColor = cardBorder,
                     focusedBorderColor = primaryBlue,
                     unfocusedContainerColor = white,
-                    focusedContainerColor = lightGray
+                    focusedContainerColor = white
                 )
             )
 
@@ -346,7 +346,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // OR DIVIDER
             Row(
@@ -400,7 +400,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(15.dp))
 
             // SIGN UP REDIRECT
             Row(

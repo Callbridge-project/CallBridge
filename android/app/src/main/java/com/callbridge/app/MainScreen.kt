@@ -52,11 +52,16 @@ fun MainScreen(onLogout: () -> Unit) {
         containerColor = Color(0xFFF5F7FA),
         bottomBar = {
             Column {
-                HorizontalDivider(color = borderGray, thickness = 1.dp)
+                HorizontalDivider(color = borderGray, thickness = 0.dp,)
                 NavigationBar(
                     containerColor = Color.White,
                     tonalElevation = 0.dp,
-                    modifier = Modifier.height(70.dp)
+                    windowInsets = WindowInsets(left = 16.dp, right = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(70.dp)
+
+
                 ) {
                     navItems.forEach { item ->
                         val selected = selectedTab == item.route

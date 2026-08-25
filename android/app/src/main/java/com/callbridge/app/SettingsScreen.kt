@@ -86,7 +86,6 @@ fun SettingsScreen(onLogout: () -> Unit) {
     var deviceName by remember { mutableStateOf("") }
     var androidVersion by remember { mutableStateOf("") }
     var lastSync by remember { mutableStateOf("") }
-    var registeredSince by remember { mutableStateOf("") }
     var notificationsEnabled by remember { mutableStateOf(true) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var isLoggingOut by remember { mutableStateOf(false) }
@@ -118,30 +117,19 @@ fun SettingsScreen(onLogout: () -> Unit) {
                         collectionId = BuildConfig.APPWRITE_COLLECTION_DEVICES,
                         documentId = deviceDocId
                     )
-
-                    val rawData = doc.data
-                    // Use a combination of keys to ensure we get the data
-                    deviceName = rawData["device_name"]?.toString()
-                        ?: rawData["deviceName"]?.toString()
+                    deviceName = doc.data["device_name"]?.toString()
                         ?: "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
-
-                    androidVersion = "Android ${rawData["android_version"]?.toString()
-                        ?: rawData["androidVersion"]?.toString()
+                    androidVersion = "Android ${doc.data["android_version"]?.toString()
                         ?: android.os.Build.VERSION.RELEASE}"
+                    // AFTER
+                    val rawLastSync = extractDateString(doc.data["last_sync"])
+                    android.util.Log.d("CallBridge", "Settings extracted last_sync: '$rawLastSync'")
+                    lastSync = formatTimestamp(rawLastSync)
 
-                    val remoteLastSync = rawData["last_sync"]?.toString() ?: rawData["lastSync"]?.toString()
-                    val remoteRegistered = rawData["device_registered_at"]?.toString() ?: rawData["deviceRegisteredAt"]?.toString()
-                    val localLastSync = prefs.getString("last_device_sync_time", "")
-
-                    android.util.Log.d("CallBridge", "Settings: remoteLastSync=$remoteLastSync, remoteRegistered=$remoteRegistered")
-
-                    lastSync = formatBeautifulSyncTime(remoteLastSync ?: localLastSync)
-                    registeredSince = formatFullDate(remoteRegistered)
                 } catch (e: Exception) {
                     deviceName = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
                     androidVersion = "Android ${android.os.Build.VERSION.RELEASE}"
                     lastSync = "—"
-                    registeredSince = "—"
                 }
             }
 
@@ -265,6 +253,7 @@ fun SettingsScreen(onLogout: () -> Unit) {
                 .padding(top = 16.dp, bottom = 12.dp, start = 16.dp, end = 16.dp)
         ) {
 
+
             Text(
                 text = "Settings",
                 fontSize = 18.sp,
@@ -333,7 +322,7 @@ fun SettingsScreen(onLogout: () -> Unit) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 painter = painterResource(
-                                    id = R.drawable.protect
+                                    id = R.drawable.settgaurd
                                 ),
                                 contentDescription = null,
                                 tint = green,
@@ -388,7 +377,7 @@ fun SettingsScreen(onLogout: () -> Unit) {
                     onClick = {
                         val intent = Intent(
                             Intent.ACTION_VIEW,
-                            Uri.parse("http://localhost:5173/login")
+                            Uri.parse("https://your-callbridge-web-url.vercel.app/settings")
                         )
                         context.startActivity(intent)
                     }
@@ -396,7 +385,7 @@ fun SettingsScreen(onLogout: () -> Unit) {
 
                 // Device Information
                 SettingsRow(
-                    iconRes = R.drawable.settdevice,
+                    iconRes = R.drawable.device,
                     iconBg = blueBg,
                     iconTint = primaryBlue,
                     title = "Device Information",
@@ -441,7 +430,7 @@ fun SettingsScreen(onLogout: () -> Unit) {
                     ) {
                         Icon(
                             painter = painterResource(
-                                id = android.R.drawable.ic_popup_reminder
+                                id = R.drawable.notification
                             ),
                             contentDescription = null,
                             tint = primaryBlue,
@@ -549,17 +538,14 @@ fun SettingsScreen(onLogout: () -> Unit) {
                     iconBg = blueBg,
                     iconTint = primaryBlue,
                     title = "Synchronization Status",
-                    subtitle = if (lastSync.isNotEmpty() && lastSync != "—")
-                        "Last synced $lastSync"
-                    else
-                        "Not yet synced",
+                    subtitle = if (lastSync.isNotEmpty()) "Last synced $lastSync"
+                    else "Last synced —",
                     showChevron = false,
                     cardBorder = cardBorder,
                     nearBlack = nearBlack,
                     mutedText = mutedText,
                     showDivider = true
                 )
-
 
                 // Connection Status
                 Row(
@@ -770,7 +756,7 @@ fun SettingsScreen(onLogout: () -> Unit) {
                                 ) {
                                     Icon(
                                         painter = painterResource(
-                                            id = android.R.drawable.ic_dialog_email
+                                            id = R.drawable.email
                                         ),
                                         contentDescription = null,
                                         tint = primaryBlue,
@@ -778,7 +764,7 @@ fun SettingsScreen(onLogout: () -> Unit) {
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Still need help? Contact Us",
+                                        text = "Still need help? Contact Us →",
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = primaryBlue
@@ -799,7 +785,7 @@ fun SettingsScreen(onLogout: () -> Unit) {
 
                 // Application Version
                 SettingsRow(
-                    iconRes = R.drawable.about,
+                    iconRes = R.drawable.apkversion,
                     iconBg = blueBg,
                     iconTint = primaryBlue,
                     title = "Application Version",

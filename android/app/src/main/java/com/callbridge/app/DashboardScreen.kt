@@ -24,8 +24,6 @@ import androidx.compose.ui.unit.sp
 import com.callbridge.app.data.DeviceDocument
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
 
 private const val LogTag = "CallBridge.Dashboard"
 
@@ -151,6 +149,9 @@ fun DashboardScreen() {
                         collectionId = BuildConfig.APPWRITE_COLLECTION_DEVICES,
                         documentId = deviceDocId
                     )
+
+                    android.util.Log.d("CallBridge", "RAW last_sync = '${doc.data["last_sync"]}'")
+                    android.util.Log.d("CallBridge", "RAW device_registered_at = '${doc.data["device_registered_at"]}'")
 
                     // Convert the Appwrite doc data to our typed class
                     val deviceData = doc.convertTo(DeviceDocument::class.java)
@@ -395,16 +396,16 @@ fun DashboardScreen() {
                 // Shield icon
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(50.dp)
                         .clip(CircleShape)
                         .background(white.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.active),
+                        painter = painterResource(id = R.drawable.dashshield),
                         contentDescription = null,
-                        tint = white,
-                        modifier = Modifier.size(28.dp)
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(32.dp)
                     )
                 }
             }
@@ -437,7 +438,7 @@ fun DashboardScreen() {
                 iconTint = deepBlue,
                 label = "Last Sync",
                 primaryValue = lastSync.ifEmpty { "—" },
-                secondaryValue = formatFullDate(),
+                secondaryValue = "Today",
                 cardBorder = cardBorder,
                 nearBlack = nearBlack,
                 mutedText = mutedText
@@ -601,6 +602,7 @@ fun DashboardScreen() {
                 }
             }
 
+            // Details
 
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -682,7 +684,7 @@ fun ActivityRow(
 ) {
     val style = when {
         item.type.contains("missed") -> ActivityStyle(R.drawable.missedcall, Color(0xFFFFEBEE), Color(0xFFE53935), "Missed Call")
-        item.type.contains("incoming") -> ActivityStyle(R.drawable.answeredcall, Color(0xFFF0FDF4), Color(0xFF10B981), "Incoming Call")
+        item.type.contains("incoming") -> ActivityStyle(R.drawable.answeredcall, Color(0xFFF0FDF4), Color(0xFF22C55E), "Incoming Call")
         item.type.contains("sms_received") -> ActivityStyle(R.drawable.unreadsms, Color(0xFFE3F2FD), Color(0xFF3B82F6), "SMS Received")
         item.type.contains("sms_sent") -> ActivityStyle(R.drawable.readsms, Color(0xFFF3E5F5), Color(0xFF7B1FA2), "SMS Sent")
         else -> ActivityStyle(android.R.drawable.ic_menu_call, Color(0xFFEEF4FF), Color(0xFF1A3A6B), item.type.replace("_", " "))
@@ -760,28 +762,4 @@ private fun <T> io.appwrite.models.Document<*>.convertTo(clazz: Class<T>): T? {
     } catch (_: Exception) {
         null
     }
-}
-
-// ── Time formatters ───────────────────────────────────────────────
-
-
-private fun formatTimeOnly(isoTimestamp: String): String {
-    return try {
-        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
-        val date = java.time.Instant.parse(isoTimestamp).let { Date.from(it) }
-        sdf.format(date)
-    } catch (_: Exception) { "" }
-}
-
-private fun formatDateOnly(isoTimestamp: String): String {
-    return try {
-        val sdf = SimpleDateFormat("MMM d", Locale.getDefault())
-        val date = java.time.Instant.parse(isoTimestamp).let { Date.from(it) }
-        sdf.format(date)
-    } catch (_: Exception) { "" }
-}
-
-private fun formatFullDate(): String {
-    val sdf = SimpleDateFormat("MMM dd, yyyy\nhh:mm a", Locale.getDefault())
-    return sdf.format(Date())
 }
