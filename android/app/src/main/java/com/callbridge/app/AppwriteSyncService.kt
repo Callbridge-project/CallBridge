@@ -17,20 +17,21 @@ object AppwriteSyncService {
     // It finds all unsynced rows and uploads them to Appwrite
     suspend fun syncPendingCallLogs(context: Context) {
         withContext(Dispatchers.IO) {
-            try {
-                val repository = CallLogRepository(context)
-                val unsyncedLogs = repository.getUnsyncedLogs()
+            val repository = CallLogRepository(context)
+            val unsyncedLogs = try {
+                repository.getUnsyncedLogs()
+            } catch (e: Exception) {
+                Log.e(TAG, "AppwriteSync: failed to fetch logs — ${e.message}")
+                emptyList()
+            }
 
-                if (unsyncedLogs.isEmpty()) {
-                    Log.d(TAG, "AppwriteSync: no pending logs to sync")
-                    return@withContext
-                }
-
+            if (unsyncedLogs.isEmpty()) {
+                Log.d(TAG, "AppwriteSync: no pending logs to sync")
+            } else {
                 Log.d(TAG, "AppwriteSync: found ${unsyncedLogs.size} unsynced log(s)")
 
                 for (log in unsyncedLogs) {
                     try {
-                        // POST the call log document to Appwrite
                         AppwriteClient.databases.createDocument(
                             databaseId = BuildConfig.APPWRITE_DATABASE_ID,
                             collectionId = BuildConfig.APPWRITE_COLLECTION_CALLLOGS,
@@ -49,28 +50,30 @@ object AppwriteSyncService {
                             )
                         )
 
-                        // Mark as synced in Room only after
-                        // Appwrite confirms the document was created
                         repository.markAsSynced(log.id)
-
                         Log.d(TAG, "AppwriteSync: synced log id=${log.id} " +
                                 "type=${log.logType} number=${log.phoneNumber}")
 
                     } catch (e: Exception) {
-                        // If one log fails do not stop — continue to the next one
-                        // It will be retried on the next sync cycle
                         Log.e(TAG, "AppwriteSync: failed to sync log id=${log.id} — ${e.message}")
                     }
                 }
-
                 Log.d(TAG, "AppwriteSync: sync cycle complete")
-
-            } catch (e: Exception) {
-                Log.e(TAG, "AppwriteSync: sync failed — ${e.message}")
             }
-            // Update device last_sync timestamp after successful sync
+
             val prefs = context.getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
             val userId = prefs.getString("current_user_id", "") ?: ""
+
+            if (userId.isNotEmpty() && unsyncedLogs.isNotEmpty()) {
+                ActivityLogService.logActivity(
+                    context = context,
+                    userId = userId,
+                    activityType = ActivityLogService.TYPE_SYNC_COMPLETED,
+                    message = "Synced ${unsyncedLogs.size} call log(s) to dashboard successfully"
+                )
+            }
+
+            // Update device last_sync timestamp after successful sync
             if (userId.isNotEmpty()) {
                 val now = java.time.Instant.now().toString()
                 prefs.edit().putString("last_device_sync_time", now).apply()
@@ -81,15 +84,17 @@ object AppwriteSyncService {
 
     suspend fun syncPendingSmsLogs(context: Context) {
         withContext(Dispatchers.IO) {
-            try {
-                val repository = SmsLogRepository(context)
-                val unsyncedLogs = repository.getUnsyncedLogs()
+            val repository = SmsLogRepository(context)
+            val unsyncedLogs = try {
+                repository.getUnsyncedLogs()
+            } catch (e: Exception) {
+                Log.e(TAG, "AppwriteSync: failed to fetch SMS logs — ${e.message}")
+                emptyList()
+            }
 
-                if (unsyncedLogs.isEmpty()) {
-                    Log.d(TAG, "AppwriteSync: no pending SMS logs to sync")
-                    return@withContext
-                }
-
+            if (unsyncedLogs.isEmpty()) {
+                Log.d(TAG, "AppwriteSync: no pending SMS logs to sync")
+            } else {
                 Log.d(TAG, "AppwriteSync: found ${unsyncedLogs.size} unsynced SMS log(s)")
 
                 for (log in unsyncedLogs) {
@@ -116,16 +121,22 @@ object AppwriteSyncService {
                         Log.e(TAG, "AppwriteSync: failed SMS id=${log.id} — ${e.message}")
                     }
                 }
-
                 Log.d(TAG, "AppwriteSync: SMS sync cycle complete")
-
-            } catch (e: Exception) {
-                Log.e(TAG, "AppwriteSync: SMS sync failed — ${e.message}")
             }
 
-            // Update device last_sync after SMS sync
+            // Post-sync tasks
             val prefs = context.getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
             val userId = prefs.getString("current_user_id", "") ?: ""
+
+            if (userId.isNotEmpty() && unsyncedLogs.isNotEmpty()) {
+                ActivityLogService.logActivity(
+                    context = context,
+                    userId = userId,
+                    activityType = ActivityLogService.TYPE_SYNC_COMPLETED,
+                    message = "Synced ${unsyncedLogs.size} SMS log(s) to dashboard successfully"
+                )
+            }
+
             if (userId.isNotEmpty()) {
                 val now = java.time.Instant.now().toString()
                 prefs.edit().putString("last_device_sync_time", now).apply()

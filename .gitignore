@@ -59,3 +59,7 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
+
+# ─── APK KEY STORE ───────────────────────────────────────
+*.jks
+*.keystore

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { databases } from "@/lib/appwrite"; // Or your project's Appwrite client import path
+import { Permission, Role, ID } from "appwrite";
 import { 
   Mail, 
   Clock, 
@@ -221,40 +223,63 @@ export default function ContactPage() {
     fileInputRef.current?.click();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newErrors: Record<string, string> = {};
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const newErrors: Record<string, string> = {};
 
-    if (!name.trim()) {
-      newErrors.name = "Legal Name is required.";
-    }
+  if (!name.trim()) {
+    newErrors.name = "Legal Name is required.";
+  }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim()) {
-      newErrors.email = "Email Address is required.";
-    } else if (!emailRegex.test(email)) {
-      newErrors.email = "Please enter a valid email address.";
-    }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email.trim()) {
+    newErrors.email = "Email Address is required.";
+  } else if (!emailRegex.test(email)) {
+    newErrors.email = "Please enter a valid email address.";
+  }
 
-    if (!message.trim()) {
-      newErrors.message = "Message cannot be empty.";
-    } else if (message.trim().length < 20) {
-      newErrors.message = "Message must be at least 20 characters long.";
-    }
+  if (!message.trim()) {
+    newErrors.message = "Message cannot be empty.";
+  } else if (message.trim().length < 20) {
+    newErrors.message = "Message must be at least 20 characters long.";
+  }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
 
-    setErrors({});
-    setIsSubmitting(true);
+  setErrors({});
+  setIsSubmitting(true);
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSuccess(true);
-    }, 1500);
-  };
+  try {
+    await databases.createDocument(
+      import.meta.env.VITE_APPWRITE_DATABASE_ID, 
+      import.meta.env.VITE_APPWRITE_COLLECTION_SUPPORT_TICKETS,
+      ID.unique(),
+      {
+        category: subject,                            // Required text field
+        message: message,                            // Required text field
+        attachment_image: fileName || null,          // Optional text field
+        submitted_at: new Date().toISOString(),      // Required datetime ISO string
+        user_id: ID.unique(),                        // Required text field (pass logged-in user ID or unique string)
+        full_name: name,                             // Required text field
+        email: email                                 // Required text field
+      },
+      [
+        Permission.read(Role.any()),
+        Permission.write(Role.any())
+      ]
+    );
+
+    setIsSubmitting(false);
+    setIsSuccess(true);
+  } catch (error) {
+    console.error("Appwrite submission failed:", error);
+    setIsSubmitting(false);
+    alert("Failed to submit ticket. Check browser console for details.");
+  }
+};
 
   return (
     // Implement exact linear gradient stop values: 0% F9F9FF, 50% E8EEFF, 87% 46546B, 100% 0B1B35

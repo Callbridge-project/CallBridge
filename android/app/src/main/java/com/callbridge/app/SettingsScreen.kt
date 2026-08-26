@@ -202,6 +202,16 @@ fun SettingsScreen(onLogout: () -> Unit) {
                                     .remove("registered_device_id")
                                     .apply()
 
+                                val logoutUserId = prefs.getString("current_user_id", "") ?: ""
+                                if (logoutUserId.isNotEmpty()) {
+                                    ActivityLogService.logActivity(
+                                        context = context,
+                                        userId = logoutUserId,
+                                        activityType = ActivityLogService.TYPE_LOGOUT,
+                                        message = "User signed out from CallBridge"
+                                    )
+                                }
+
                                 // Sign out of Appwrite
                                 AuthService.logout()
 

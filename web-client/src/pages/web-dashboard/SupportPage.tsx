@@ -6,6 +6,7 @@ import PageLayout from "@/components/layout/PageLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import emailjs from "@emailjs/browser";
 import { 
   User, 
   Mail, 
@@ -126,61 +127,74 @@ export default function SupportPage() {
   };
 
   // Submit Ticket Form
-  const handleSubmitTicket = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitError(null);
+const handleSubmitTicket = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setSubmitError(null);
 
-    // 1. Client-side validations
-    if (!category) {
-      toast.error("Please select an issue category.");
-      return;
-    }
-    if (message.length < 20) {
-      toast.error("Detailed message must be at least 20 characters.");
-      return;
-    }
+  if (!category) {
+    toast.error("Please select an issue category.");
+    return;
+  }
+  if (message.length < 20) {
+    toast.error("Detailed message must be at least 20 characters.");
+    return;
+  }
 
-    setIsSubmitting(true);
-    const toastId = toast.loading("Submitting support ticket...");
+  setIsSubmitting(true);
+  const toastId = toast.loading("Submitting support ticket...");
 
-    try {
-      const dbId = AppwriteConfig.databaseId;
+  try {
+    const dbId = AppwriteConfig.databaseId;
 
-      // 2. Create document in support_tickets collection
-      await databases.createDocument(
-        dbId,
-        SUPPORT_TICKETS_COLLECTION_ID,
-        ID.unique(),
-        {
-          user_id: userId,
-          full_name: userName, // Standard casing
-          Full_name: userName, // Include exact prompt key case-sensitive fallback
-          email: userEmail,
-          category: category,
-          message: message,
-          attachment_image: attachment ? attachment.name : null, // Store filename for MVP
-          submitted_at: new Date().toISOString()
-        }
-      );
-
-      // 3. Reset form states on success
-      setCategory("");
-      setMessage("");
-      setAttachment(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+    // 1. Save to Appwrite Database
+    await databases.createDocument(
+      dbId,
+      SUPPORT_TICKETS_COLLECTION_ID,
+      ID.unique(),
+      {
+        user_id: userId,
+        full_name: userName,
+        email: userEmail,
+        category: category,
+        message: message,
+        attachment_image: attachment ? attachment.name : null,
+        submitted_at: new Date().toISOString()
       }
-      
-      setSubmitSuccess(true);
-      toast.success("Support ticket submitted!", { id: toastId });
-    } catch (err: any) {
-      console.error("Failed to submit support ticket:", err);
-      setSubmitError("Failed to submit ticket. Please try again.");
-      toast.error("Ticket submission failed", { id: toastId });
-    } finally {
-      setIsSubmitting(false);
+    );
+
+    // 2. Dispatch Email straight to your Gmail
+    await emailjs.send(
+      "service_9p52evq",
+      "template_ylq3quu",
+      {
+        full_name: userName,
+        email: userEmail,
+        category: category,
+        message: message,
+        user_id: userId,
+        submitted_at: new Date().toLocaleString()
+      },
+      "GtIrEBLr1LZFz3hfz"
+    );
+
+    // 3. Reset form states
+    setCategory("");
+    setMessage("");
+    setAttachment(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
-  };
+    
+    setSubmitSuccess(true);
+    toast.success("Support ticket submitted and emailed!", { id: toastId });
+  } catch (err: any) {
+    console.error("Failed to submit support ticket:", err);
+    setSubmitError("Failed to submit ticket. Please try again.");
+    toast.error("Ticket submission failed", { id: toastId });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <PageLayout>
