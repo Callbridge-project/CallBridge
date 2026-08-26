@@ -291,9 +291,24 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                             val userResult = AuthService.getCurrentUser()
                             if (userResult.isSuccess) {
                                 val userId = userResult.getOrNull()?.id ?: ""
-                                // Store in SharedPreferences so the background service can access it
-                                val prefs = context.getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
-                                prefs.edit().putString("current_user_id", userId).apply()
+
+                                if (userId.isNotEmpty()) {
+                                    // Store in SharedPreferences so the background service can access it
+                                    val prefs = context.getSharedPreferences(
+                                        "callbridge_prefs",
+                                        Context.MODE_PRIVATE
+                                    )
+                                    prefs.edit().putString("current_user_id", userId).apply()
+
+                                    ActivityLogService.logActivity(
+                                        context = context,
+                                        userId = userId,
+                                        activityType = ActivityLogService.TYPE_LOGIN,
+                                        message = "User signed in to CallBridge from ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
+                                    )
+                                }
+
+
                             }
 
                             // Start the monitoring service

@@ -10,6 +10,8 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class CallBridgeMonitoringService : Service() {
@@ -62,7 +64,22 @@ class CallBridgeMonitoringService : Service() {
                 DeviceRegistrationService.registerOrUpdateDevice(
                     this@CallBridgeMonitoringService, userId
                 )
+                ActivityLogService.logActivity(
+                    context = this@CallBridgeMonitoringService,
+                    userId = userId,
+                    activityType = ActivityLogService.TYPE_MONITORING_STARTED,
+                    message = "Monitoring started on ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
+                )
+                ActivityLogService.logActivity(
+                    context = this@CallBridgeMonitoringService,
+                    userId = userId,
+                    activityType = ActivityLogService.TYPE_DEVICE_CONNECTED,
+                    message = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} connected to dashboard"
+                )
+                ActivityLogService.cleanupOldLogs(this@CallBridgeMonitoringService, userId)
             }
+            AppwriteSyncService.syncPendingCallLogs(this@CallBridgeMonitoringService)
+            AppwriteSyncService.syncPendingSmsLogs(this@CallBridgeMonitoringService)
         }
 
         // Sync any events that were saved while offline
@@ -78,6 +95,19 @@ class CallBridgeMonitoringService : Service() {
         super.onDestroy()
         callMonitor?.stopListening()
         smsObserver?.stopObserving()
+
+        val prefs = getSharedPreferences("callbridge_prefs", Context.MODE_PRIVATE)
+        val userId = prefs.getString("current_user_id", "") ?: ""
+        if (userId.isNotEmpty()) {
+            CoroutineScope(Dispatchers.IO).launch {
+                ActivityLogService.logActivity(
+                    context = this@CallBridgeMonitoringService,
+                    userId = userId,
+                    activityType = ActivityLogService.TYPE_MONITORING_STOPPED,
+                    message = "Monitoring stopped on ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
+                )
+            }
+        }
         Log.d("CallBridge", "ForegroundService: destroyed")
     }
 
