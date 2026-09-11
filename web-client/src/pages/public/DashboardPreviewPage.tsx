@@ -32,6 +32,10 @@ export default function DashboardPreviewPage() {
     setIsMounted(true);
   }, []);
 
+  const APK_DOWNLOAD_URL = 
+  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6a8f16dc0002dab9c5e7/download?project=69f0e3dc000b51d0cfad";
+  
+
   return (
     // Implement exact linear gradient stop values: 0% F9F9FF, 50% E8EEFF, 87% 46546B
     <div 
@@ -297,7 +301,8 @@ export default function DashboardPreviewPage() {
             </Link>
             
             <a 
-              href="#" 
+              href={APK_DOWNLOAD_URL}
+              download="callbridge-v1.0.apk" 
               className="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white font-semibold py-4 px-8 rounded-full border border-white/10 shadow-sm flex items-center justify-center transition duration-200 gap-2"
             >
               <Download className="h-4.5 w-4.5" />
@@ -305,7 +310,7 @@ export default function DashboardPreviewPage() {
             </a>
           </div>
 
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
+          <p className="text-[12px] font-semibold text-slate-400 uppercase tracking-widest">
             No credit card. No setup fee.
           </p>
         </div>

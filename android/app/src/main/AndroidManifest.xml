@@ -19,7 +19,7 @@
         android:required="false" />
 
     <application
-        android:name=".CallBridgeApplication"
+        android:name=".core.CallBridgeApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -30,7 +30,7 @@
         android:theme="@style/Theme.CallBridge">
 
         <service
-            android:name=".CallBridgeMonitoringService"
+            android:name=".service.CallBridgeMonitoringService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="phoneCall" />
@@ -47,7 +47,7 @@
         </activity>
 
         <receiver
-            android:name=".SmsReceiver"
+            android:name=".service.SmsReceiver"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS">

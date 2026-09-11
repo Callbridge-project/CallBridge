@@ -31,6 +31,8 @@ import {
 
 // Import mockup image
 import laptopMockupImg from "@/assets/images/Callbridge Signup.png";
+import { signUp } from "@/appwrite/auth";
+
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -125,15 +127,21 @@ const { ID, Permission, Role } = await import("appwrite");
 
 const user = await account.create(ID.unique(), email, password, name);
 
+await account.createEmailPasswordSession(email, password);
+
+
 await databases.createDocument(
     APPWRITE_DATABASE_ID,
     USERS_COLLECTION_ID,
     user.$id,
     {
-        user_id: user.$id,
+      
         full_name: name,
         email: email,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+         last_login: new Date().toISOString(),
+         active_device_name: deviceBrand,
+         active_device_id: "none"
     },
     [
         Permission.read(Role.user(user.$id)),

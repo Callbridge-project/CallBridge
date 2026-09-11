@@ -128,19 +128,19 @@
 @layer utilities {
   @keyframes float {
     0% {
-      transform: translateY(0px) translateX(0px);
+      transform: translateY(5px) translateX(5px);
     }
     25% {
-      transform: translateY(-10px) translateX(7px);
+      transform: translateY(-12px) translateX(9px);
     }
     50% {
-      transform: translateY(-13px) translateX(5px);
+      transform: translateY(-15px) translateX(7px);
     }
     75% {
       transform: translateY(-9px) translateX(-7px);
     }
     100% {
-      transform: translateY(0px) translateX(0px);
+      transform: translateY(5px) translateX(5px);
     }
   }
 

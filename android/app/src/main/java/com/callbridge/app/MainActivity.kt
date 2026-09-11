@@ -1,13 +1,14 @@
 package com.callbridge.app
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import com.callbridge.app.ui.navigation.AppNavigation
 import com.callbridge.app.ui.theme.CallBridgeTheme
+import com.callbridge.app.utils.PermissionManager
 
 class MainActivity : ComponentActivity() {
 

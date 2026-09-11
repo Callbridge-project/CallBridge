@@ -89,6 +89,7 @@ export default function DevicePage() {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
+  
 
   // ── useQuery: devices (cached — renders instantly on revisit) ──────────────
   const { data: devicesQueryData, isLoading: devicesLoading, refetch: refetchDevices } = useQuery({
@@ -745,6 +746,9 @@ function SetupModal({ onClose }: { onClose: () => void }) {
     }
   ];
 
+  const APK_DOWNLOAD_URL = 
+  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6a8f16dc0002dab9c5e7/download?project=69f0e3dc000b51d0cfad";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -807,17 +811,19 @@ function SetupModal({ onClose }: { onClose: () => void }) {
 
         {/* Button to simulate APK download */}
         <div className="mt-6 flex justify-center">
-          <Button
+          <a
             onClick={() => {
               toast.success("Downloading CallBridge Android APK...");
               setTimeout(() => {
                 toast.success("APK Download completed!");
               }, 1500);
             }}
-            className="h-12 bg-[#005EA1] hover:bg-[#004D85] text-white rounded-full font-serif font-semibold w-full shadow-lg"
+            href={APK_DOWNLOAD_URL}
+            download="callbridge-v1.0.apk"
+            className="h-12 bg-[#005EA1] hover:bg-[#004D85] text-white rounded-full font-serif font-semibold w-full shadow-lg flex items-center justify-center gap-2 transition"
           >
             Start Download
-          </Button>
+          </a>
         </div>
       </div>
 

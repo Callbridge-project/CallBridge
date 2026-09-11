@@ -23,6 +23,8 @@ import {
   EyeOff
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { Trash2 } from "lucide-react";
+import { clearAllUserData } from "@/appwrite/dataService";
 
 
 // Helper to check password strength
@@ -75,6 +77,11 @@ export default function SettingsPage() {
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>("default");
   const [isNotificationSupported, setIsNotificationSupported] = useState(false);
   
+  // Clear All Logs
+const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
+const [isClearingData, setIsClearingData] = useState(false);
+const [clearProgress, setClearProgress] = useState("");
+
   // Modals
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -241,6 +248,27 @@ export default function SettingsPage() {
       toast.success("Push alerts suspended.");
     }
   };
+
+  const handleClearAllData = async () => {
+    if (!userId) return;
+    setIsClearingData(true);
+    setClearProgress("Clearing call logs...");
+
+    try {
+        await clearAllUserData(
+            userId,
+            (message) => setClearProgress(message)
+        );
+        setIsClearDataModalOpen(false);
+        toast.success("All data cleared successfully.");
+    } catch (err: any) {
+        console.error("Failed to clear data:", err);
+        toast.error("Failed to clear data. Please try again.");
+    } finally {
+        setIsClearingData(false);
+        setClearProgress("");
+    }
+};
 
   // Handle Destructive Sign Out
   const handleSignOutConfirm = async () => {
@@ -645,6 +673,27 @@ export default function SettingsPage() {
                   Stop All Services
                 </Button>
               </div>
+                 
+                 
+                   {/* Row 2: Clear All Data */}
+               <div className="flex items-center justify-between flex-col sm:flex-row gap-4">
+              <div className="space-y-0.5">
+              <h4 className="text-sm font-semibold font-serif text-rose-700">
+               Danger Zone: Clear All Logs
+              </h4>
+             <p className="text-[12px] text-rose-500/80">
+              Permanently erase all call logs, SMS logs and activity history
+             </p>
+           </div>
+          <Button
+         type="button"
+         onClick={() => setIsClearDataModalOpen(true)}
+         className="border-rose-200 hover:bg-rose-100 text-rose-600 hover:text-rose-700 hover:border-rose-300 rounded-xl font-semibold h-9 transition flex items-center justify-center shrink-0 px-5 bg-white text-xs border"
+        >
+         <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+         Clear All Data
+       </Button>
+      </div>
 
               {/* <div className="h-px bg-rose-100/50" /> */}
 
@@ -729,6 +778,85 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* CONFIRM CLEAR DATA DIALOG MODAL */}
+{isClearDataModalOpen && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <div
+            className="fixed inset-0 bg-[#090d16]/45 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
+            onClick={() => {
+                if (!isClearingData) setIsClearDataModalOpen(false);
+            }}
+        />
+
+        {/* Modal Card */}
+        <div className="relative w-full max-w-sm rounded-[28px] border border-dashboard-border/60 bg-white p-7 shadow-2xl animate-in fade-in zoom-in-95 duration-200 z-10">
+
+            {/* Close Button */}
+            {!isClearingData && (
+                <button
+                    onClick={() => setIsClearDataModalOpen(false)}
+                    className="absolute top-0 right-3 flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-50 text-slate-450 hover:text-slate-600 transition focus:outline-none"
+                >
+                    <X className="h-5 w-5" />
+                </button>
+            )}
+
+            <div className="text-center space-y-4">
+                <div className="mx-auto flex h-13 w-13 items-center justify-center rounded-full bg-rose-50 text-rose-600 border border-rose-100">
+                    <Trash2 className="h-5.5 w-5.5" />
+                </div>
+
+                <h3 className="text-lg font-bold text-slate-900">
+                    Clear All Data
+                </h3>
+
+                <p className="text-xs font-semibold text-slate-450 leading-relaxed max-w-xs mx-auto">
+                    This will permanently delete all call logs, SMS logs and activity history from your dashboard. Your account and device connection remain intact.
+                </p>
+
+                <p className="text-xs font-bold text-rose-600">
+                    This action cannot be undone.
+                </p>
+
+                {/* Progress indicator while clearing */}
+                {isClearingData && clearProgress && (
+                    <div className="flex items-center justify-center gap-2 rounded-xl bg-rose-50 border border-rose-100 px-4 py-3">
+                        <Loader2 className="h-4 w-4 text-rose-500 animate-spin shrink-0" />
+                        <span className="text-xs font-semibold text-rose-600">
+                            {clearProgress}
+                        </span>
+                    </div>
+                )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="mt-7 grid grid-cols-2 gap-3">
+                <Button
+                    variant="outline"
+                    onClick={() => setIsClearDataModalOpen(false)}
+                    disabled={isClearingData}
+                    className="h-11 border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl font-bold transition text-xs"
+                >
+                    Cancel
+                </Button>
+                <Button
+                    onClick={handleClearAllData}
+                    disabled={isClearingData}
+                    className="h-11 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-sm text-xs"
+                >
+                    {isClearingData
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : <Trash2 className="h-4 w-4" />
+                    }
+                    {isClearingData ? "Clearing..." : "Yes, Clear All"}
+                </Button>
+            </div>
+        </div>
+    </div>
+)}
+
     </PageLayout>
   );
 }
