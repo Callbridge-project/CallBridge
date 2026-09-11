@@ -33,7 +33,7 @@ export default function DashboardPreviewPage() {
   }, []);
 
   const APK_DOWNLOAD_URL = 
-  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6a8f16dc0002dab9c5e7/download?project=69f0e3dc000b51d0cfad";
+  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6aa381d8000c8aa8ea0e/download?project=69f0e3dc000b51d0cfad";
   
 
   return (

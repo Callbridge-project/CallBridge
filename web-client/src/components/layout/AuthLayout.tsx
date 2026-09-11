@@ -70,14 +70,14 @@ export default function AuthLayout({ heroSlot, cardSlot }: AuthLayoutProps) {
           <div className="flex items-center gap-4">
             <img src={footerLogoImg} className="h-8 object-contain" alt="CallBridge Logo" />
             <span className="text-xs font-normal text-slate-400">
-              © 2024 CallBridge. All rights reserved.
+              © 2026 CallBridge. All rights reserved.
             </span>
           </div>
 
           <div className="flex items-center gap-6 text-xs font-normal text-slate-400">
             <Link to="/policy" className="hover:text-white transition">Privacy Policy</Link>
             <Link to="/policy" className="hover:text-white transition">Terms of Service</Link>
-            <Link to="#support" className="hover:text-white transition">Support Center</Link>
+            <Link to="/contact" className="hover:text-white transition">Support Center</Link>
           </div>
 
           <div className="flex items-center gap-3 text-slate-400">

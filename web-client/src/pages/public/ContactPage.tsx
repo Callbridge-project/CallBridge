@@ -163,6 +163,8 @@ export default function ContactPage() {
   const [subject, setSubject] = useState("High Priority Technical Issue");
   const [message, setMessage] = useState("");
   const [fileName, setFileName] = useState("");
+
+  const [honeypot, setHoneypot] = useState("");
   
   // Validation States
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -255,7 +257,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   try {
     await databases.createDocument(
       import.meta.env.VITE_APPWRITE_DATABASE_ID, 
-      import.meta.env.VITE_APPWRITE_COLLECTION_SUPPORT_TICKETS,
+      import.meta.env.VITE_APPWRITE_SUPPORT_TICKETS_COLLECTION_ID,
       ID.unique(),
       {
         category: subject,                            // Required text field
@@ -503,6 +505,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                     />
                   </div>
                 </div>
+
+                {/* Hidden Honeypot Input */}
 
                 {/* Submit button (Linear Gradient Stops: 0% 005EA1, 100% 0B1B35) */}
                 <Button
