@@ -45,6 +45,10 @@ const footerSections: FooterSection[] = [
   }
 ];
 
+const APK_DOWNLOAD_URL = 
+  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6a8f16dc0002dab9c5e7/download?project=69f0e3dc000b51d0cfad";
+
+
 export default function Footer() {
   return (
     <footer className="w-full bg-marketing-footer text-white select-none font-sans">
@@ -93,7 +97,8 @@ export default function Footer() {
                 {section.title === "Support" && (
                   <div className="pt-2">
                     <a 
-                      href="#"
+                      href={APK_DOWNLOAD_URL}
+                      download="callbridge-v1.0.apk"
                       className="inline-flex items-center bg-footer-btn-gradient hover:opacity-90 text-white text-sm font-normal px-6 md:px-8 py-3 rounded-full shadow-[0_4px_16px_rgba(37,99,235,0.15)] active:scale-98 transition-all duration-200 h-14"
                     >
                       {/* Inline SVG Android Logo */}

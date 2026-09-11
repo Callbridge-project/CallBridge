@@ -28,6 +28,12 @@ import androidMockup from "@/assets/images/CallBridge Android Mockup.png";
 import phonesMockup from "@/assets/images/phones-mockup.png";
 import deviceSyncImg from "@/assets/images/Cinematic composition showing device synchronization.png";
 
+import monitoring from "@/assets/monitoring.svg";
+import reports from "@/assets/Reports.svg";
+import realtime from "@/assets/realtime.svg";
+import remotewipe from "@/assets/remotewipe.svg";
+import pushnotify from "@/assets/pushnotify.svg"
+
 // ── CONFIGURATIONS FOR MODULAR MAPS ──────────────────────────────────────
 
 const whyCards = [
@@ -52,7 +58,7 @@ const bentoFeatures = [
   {
     title: "Call Mirroring",
     desc: "Sync incoming and outgoing call metadata instantly to your secure dashboard.",
-    icon: PhoneCall
+    icon: monitoring
   },
   {
     title: "SMS Vault",
@@ -62,22 +68,22 @@ const bentoFeatures = [
   {
     title: "Push Alerts",
     desc: "Get desktop notifications the moment your phone receives a critical communication.",
-    icon: Bell
+    icon: pushnotify
   },
   {
     title: "Visual Reports",
     desc: "Understand patterns with beautiful charts representing your daily communication flow.",
-    icon: BarChart2
+    icon: reports
   },
   {
     title: "Real-Time Visibility",
     desc: "Monitor Android call and SMS activity through a connected web interface.",
-    icon: Eye
+    icon: realtime
   },
   {
     title: "Remote Wipe",
     desc: "In case of emergency, remotely clear synced logs to protect sensitive data.",
-    icon: Trash2
+    icon: remotewipe
   }
 ];
 
@@ -103,6 +109,9 @@ const faqItems = [
   }
 ];
 
+const APK_DOWNLOAD_URL = 
+  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6a8f16dc0002dab9c5e7/download?project=69f0e3dc000b51d0cfad";
+  
 export default function LandingPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [openFAQIndex, setOpenFAQIndex] = useState<number | null>(null);
@@ -146,13 +155,15 @@ export default function LandingPage() {
             
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
-              <Link 
-                to="/register" 
-                className="bg-btn-primary-gradient text-white text-sm py-3.5 px-8 rounded-full shadow-btn-primary flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-98 transition-all duration-200 font-semibold"
-              >
+               <a 
+                 href={APK_DOWNLOAD_URL}
+                 download="callbridge-v1.0.apk"
+                 className="bg-btn-primary-gradient text-white text-sm py-3.5 px-8 rounded-full shadow-btn-primary flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-98 transition-all duration-200 font-semibold"
+                  >
                 <Download className="h-4.5 w-4.5" />
                 Download APK
-              </Link>
+              </a>
+
               
               <Link 
                 to="/login" 
@@ -230,7 +241,7 @@ export default function LandingPage() {
             {/* FLOATING BADGES */}
             {/* Top-Left: Calls Synced */}
             <div 
-              className={`absolute top-[18%] -left-[14%] bg-white border border-slate-100/70 rounded-2xl p-3 shadow-badge-blue flex items-center gap-3 transition-all duration-300 ease-out delay-100 animate-float ${
+              className={`absolute top-[18%] -left-[6%] bg-white border border-slate-100/70 rounded-2xl p-3 shadow-badge-blue flex items-center gap-3 transition-all duration-300 ease-out delay-100 animate-float ${
                 isMounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
               }`}
               style={{ animationDuration: '7s', animationDelay: '0.2s' }}
@@ -246,7 +257,7 @@ export default function LandingPage() {
 
             {/* Bottom-Left: Active Calls */}
             <div 
-              className={`absolute bottom-[16%] -left-[12%] bg-white border border-slate-100/70 rounded-2xl p-3 shadow-badge-blue flex items-center gap-3 transition-all duration-300 ease-out delay-300 animate-float ${
+              className={`absolute bottom-[16%] -left-[5%] bg-white border border-slate-100/70 rounded-2xl p-3 shadow-badge-blue flex items-center gap-3 transition-all duration-300 ease-out delay-300 animate-float ${
                 isMounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
               }`}
               style={{ animationDuration: '6s', animationDelay: '0.5s' }}
@@ -345,19 +356,28 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {bentoFeatures.map((feat) => {
-              const Icon = feat.icon;
-              return (
-                <div key={feat.title} className="bg-white rounded-[32px] min-h-[260px] p-8 text-left space-y-4 shadow-badge-blue hover:-translate-y-1 transition-all duration-300 flex flex-col justify-center">
-                  <Icon className="h-6 w-6 text-primary" />
-                  <h4 className="text-base font-semibold text-marketing-dark">{feat.title}</h4>
-                  <p className="text-marketing-light text-m-xs font-normal leading-relaxed">
-                    {feat.desc}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
+  {bentoFeatures.map((feat) => {
+    const Icon = feat.icon;
+    return (
+      <div key={feat.title} className="bg-white rounded-[32px] min-h-[260px] p-8 text-left space-y-4 shadow-badge-blue hover:-translate-y-1 transition-all duration-300 flex flex-col justify-center">
+        {/* Dynamic check: Render as an img if it's an asset string, otherwise render as a Lucide component */}
+        <div className="h-6 w-6 flex items-center justify-center">
+          {typeof Icon === "string" ? (
+            <img src={Icon} alt={feat.title} className="h-6 w-6 object-contain" />
+          ) : (
+            <Icon className="h-6 w-6 text-primary" />
+          )}
+        </div>
+        
+        <h4 className="text-base font-semibold text-marketing-dark">{feat.title}</h4>
+        <p className="text-marketing-light text-m-xs font-normal leading-relaxed">
+          {feat.desc}
+        </p>
+      </div>
+    );
+  })}
+</div>
+
 
         </div>
       </section>
