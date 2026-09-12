@@ -37,6 +37,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import deviceshield from "@/assets/deviceshield.svg";
+
 // Helper to format date relative to today
 const formatRelativeTime = (isoString: string) => {
   try {
@@ -676,32 +678,45 @@ export default function DevicePage() {
                 </div>
               </Card>
 
-              {/* PRIVACY MATTERS CARD */}
-              <Card className="border border-blue-100/30 bg-[#EBF3F9]/60 shadow-sm rounded-[1.5rem] p-6 relative overflow-hidden flex flex-col justify-between min-h-[200px]">
-                <div className="absolute top-0 right-0 h-28 w-28 rounded-full bg-blue-500/5 blur-2xl pointer-events-none" />
-                
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 border border-blue-100 shadow-inner">
-                      <Shield className="h-5 w-5" />
-                    </div>
-                    <h4 className="text-sm font-bold font-serif text-[#0F172A]">
-                      Your Privacy Matters
-                    </h4>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    CallBridge uses end-to-end encryption for all synchronized content. Your logs, SMS, and device data are processed securely and never stored in plain text.
-                  </p>
-                </div>
+             {/* PRIVACY MATTERS CARD */}
+        <Card className="relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-[1.5rem] border border-blue-100/40 bg-[#EBF3F9]/60 p-6 shadow-sm backdrop-blur-sm">
+        {/* Ambient Top Right Glow */}
+           <div className="pointer-events-none absolute top-0 right-0 h-28 w-28 rounded-full bg-blue-500/5 blur-2xl" />
+  
+          {/* Faint Background Shield Watermark */}
+           <img 
+             src={deviceshield} 
+             className="pointer-events-none absolute -right-4 -bottom-6 h-36 w-36 select-none opacity-[0.03] mix-blend-multiply transition-transform duration-300" 
+               alt="" 
+                      />
+  
+  {/* Top Content Area */}
+  <div className="relative z-10 space-y-3.5">
+    <div className="flex items-center gap-3">
+      {/* App Icon Container */}
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-blue-200/50 bg-[#004A80] text-white shadow-md">
+        <Shield className="h-5 w-5 fill-white/10" />
+      </div>
+      <h4 className="font-serif text-[15px] font-bold tracking-tight text-[#004A80]">
+        Your Privacy Matters
+      </h4>
+    </div>
+    
+    <p className="max-w-[95%] text-[13px] font-medium leading-[1.6] text-slate-600/90">
+      CallBridge uses end-to-end encryption for all synchronized content. 
+      Your logs, SMS, and device data are processed securely and never stored in plain text.
+    </p>
+  </div>
 
-                <div>
-                  <div className="h-px bg-slate-200/40 my-4" />
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#005EA1] select-none">
-                    <ShieldCheck className="h-4 w-4 shrink-0" />
-                    Secure Handling Active
-                  </div>
-                </div>
-              </Card>
+  {/* Bottom Status Area */}
+  <div className="relative z-10 mt-4">
+    <div className="flex items-center gap-2 text-[12px] font-bold tracking-wide text-[#005EA1] select-none">
+      <ShieldCheck className="h-4 w-4 shrink-0 fill-[#005EA1]/10" />
+      Secure Handling Active
+    </div>
+  </div>
+</Card>
+
 
             </div>
 
@@ -747,7 +762,7 @@ function SetupModal({ onClose }: { onClose: () => void }) {
   ];
 
   const APK_DOWNLOAD_URL = 
-  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6a8f16dc0002dab9c5e7/download?project=69f0e3dc000b51d0cfad";
+  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6aa381d8000c8aa8ea0e/download?project=69f0e3dc000b51d0cfad";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

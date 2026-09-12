@@ -14,7 +14,8 @@ import {
   Share2, 
   HelpCircle,
   Globe,
-  ShieldCheck
+  ShieldCheck,
+  Link
 } from "lucide-react";
 import footerLogoImg from "@/assets/images/footer-logo.png";
 
@@ -214,7 +215,7 @@ export default function PolicyPage() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-slate-400 px-1">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-slate-300" />
-                <span>Last Updated: October 24, 2024</span>
+                <span>Last Updated: August 24, 2026</span>
               </div>
               <div className="flex items-center gap-3">
                 <Globe className="h-4.5 w-4.5 text-slate-300" />
@@ -232,7 +233,7 @@ export default function PolicyPage() {
           <div className="flex items-center gap-4">
             <img src={footerLogoImg} className="h-8 object-contain" alt="CallBridge Logo" />
             <span className="text-xs font-normal text-slate-400">
-              © 2024 CallBridge. All rights reserved.
+              © 2026 CallBridge. All rights reserved.
             </span>
           </div>
 
@@ -240,7 +241,7 @@ export default function PolicyPage() {
             <span className="text-white font-semibold underline decoration-2 underline-offset-4 cursor-default">
               Terms & Privacy Policy
             </span>
-            <a href="#support" className="hover:text-white transition">Support Center</a>
+            <a href="/contact" className="hover:text-white transition">Support Center</a>
           </div>
 
           <div className="flex items-center gap-3 text-slate-400">

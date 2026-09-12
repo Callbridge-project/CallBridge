@@ -128,8 +128,8 @@ const securityCards = [
   },
 ];
 
-const APK_DOWNLOAD_URL =
-  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6a8f16dc0002dab9c5e7/download?project=69f0e3dc000b51d0cfad";
+const APK_DOWNLOAD_URL = 
+  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6aa381d8000c8aa8ea0e/download?project=69f0e3dc000b51d0cfad";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Reusable viewport animation hook
@@ -466,7 +466,7 @@ export default function AndroidPage() {
             {/* Desktop animated line */}
             <div className="absolute top-12 left-[12%] right-[12%] h-0.5 bg-slate-300 z-0 hidden md:block overflow-hidden">
               <div
-                className={`h-full w-full origin-left bg-gradient-to-r from-primary/20 via-primary to-primary/20 transition-transform duration-[1800ms] ease-out ${
+                className={`h-full w-full origin-left bg-gradient-to-r from-primary/20 via-primary to-primary/20 transition-all style={{ transitionDuration: "1600ms" }} ease-out ${
                   howSection.isVisible
                     ? "scale-x-100"
                     : "scale-x-0"
