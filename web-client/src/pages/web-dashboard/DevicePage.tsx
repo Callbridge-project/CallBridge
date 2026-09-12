@@ -679,16 +679,16 @@ export default function DevicePage() {
               </Card>
 
              {/* PRIVACY MATTERS CARD */}
-<Card className="relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-[1.5rem] border border-blue-100/40 bg-[#EBF3F9]/60 p-6 shadow-sm backdrop-blur-sm">
-  {/* Ambient Top Right Glow */}
-  <div className="pointer-events-none absolute top-0 right-0 h-28 w-28 rounded-full bg-blue-500/5 blur-2xl" />
+        <Card className="relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-[1.5rem] border border-blue-100/40 bg-[#EBF3F9]/60 p-6 shadow-sm backdrop-blur-sm">
+        {/* Ambient Top Right Glow */}
+           <div className="pointer-events-none absolute top-0 right-0 h-28 w-28 rounded-full bg-blue-500/5 blur-2xl" />
   
-  {/* Faint Background Shield Watermark */}
-  <img 
-    src={deviceshield} 
-    className="pointer-events-none absolute -right-4 -bottom-6 h-36 w-36 select-none opacity-[0.03] mix-blend-multiply transition-transform duration-300" 
-    alt="" 
-  />
+          {/* Faint Background Shield Watermark */}
+           <img 
+             src={deviceshield} 
+             className="pointer-events-none absolute -right-4 -bottom-6 h-36 w-36 select-none opacity-[0.03] mix-blend-multiply transition-transform duration-300" 
+               alt="" 
+                      />
   
   {/* Top Content Area */}
   <div className="relative z-10 space-y-3.5">
