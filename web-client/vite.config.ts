@@ -19,13 +19,13 @@ export default defineConfig(({ mode }) => {
     ].filter(Boolean),
     resolve: {
       alias: {
-        "@": resolve(__dirname, "./src"),
+        "@": resolve(import.meta.dirname, "./src"),
       },
     },
     build: isLib
       ? {
           lib: {
-            entry: resolve(__dirname, "src/index.ts"),
+            entry: resolve(import.meta.dirname, "src/index.ts"),
             name: "A89DesignSystem",
             formats: ["es"],
             fileName: "index",
