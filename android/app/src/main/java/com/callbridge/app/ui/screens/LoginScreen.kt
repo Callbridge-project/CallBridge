@@ -29,6 +29,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -71,6 +73,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
     // scope lets us run suspend functions like AuthService.login from a button click
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
 
     // Color constants matching your design system
     val primaryBlue = Color(0xFF4A90D9)
@@ -255,7 +258,15 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     text = "Forgot password?",
                     fontSize = 13.sp,
                     color = primaryBlue,
-                    modifier = Modifier.clickable { /* TODO: forgot password flow */ }
+                    modifier = Modifier.clickable {
+                        // ── FIXED: Seamlessly open the password reset URL in their mobile browser ──
+                        try {
+                            uriHandler.openUri("https://callbridge.pages.dev/forgot-password")
+                        } catch (e: Exception) {
+                            // Fallback catch if the phone lacks a default browser (rare but safe)
+                            Toast.makeText(context, "Unable to open browser. Please visit callbridge.io", Toast.LENGTH_LONG).show()
+                        }
+                    }
                 )
             }
 
@@ -391,7 +402,9 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // GOOGLE BUTTON — placeholder for now
+            // Ensure 'val context = LocalContext.current' is declared at the top of your Composable screen function
+
+// GOOGLE BUTTON — placeholder for now
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -399,7 +412,14 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     .border(1.dp, cardBorder, RoundedCornerShape(26.dp))
                     .clip(RoundedCornerShape(26.dp))
                     .background(Color.White)
-                    .clickable { /* Google Sign-In — future implementation */ },
+                    .clickable {
+                        // ── FIXED: Instant, native feedback informing users it's coming soon ──
+                        Toast.makeText(
+                            context,
+                            "Google Sign-In is coming soon! Please sign in with your email.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Row(
@@ -421,6 +441,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 }
             }
 
+
             Spacer(modifier = Modifier.height(15.dp))
 
             // SIGN UP REDIRECT
@@ -441,7 +462,13 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                     color = primaryBlue,
                     modifier = Modifier.clickable {
-                        // TODO: Open web signup after deployment
+                        // ── FIXED: Redirect them straight to your live Cloudflare registration route ──
+                        try {
+                            uriHandler.openUri("https://callbridge.pages.dev/register")
+                        } catch (e: Exception) {
+                            // Safe fallback toast alert
+                            Toast.makeText(context, "Please visit callbridge.io/register to create an account", Toast.LENGTH_LONG).show()
+                        }
                     }
                 )
             }

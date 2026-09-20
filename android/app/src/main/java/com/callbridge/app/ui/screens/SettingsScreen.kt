@@ -525,7 +525,7 @@ fun SettingsScreen(onLogout: () -> Unit) {
                     onClick = {
                         val intent = Intent(
                             Intent.ACTION_VIEW,
-                            Uri.parse("https://your-callbridge-web-url.vercel.app/settings")
+                            Uri.parse("https://callbridge.pages.dev/")
                         )
                         context.startActivity(intent)
                     }
@@ -891,7 +891,7 @@ fun SettingsScreen(onLogout: () -> Unit) {
                                     .clickable {
                                         val intent = Intent(
                                             Intent.ACTION_VIEW,
-                                            Uri.parse("https://your-callbridge-web-url.vercel.app/contact")
+                                            Uri.parse("https://callbridge.pages.dev/contact")
                                         )
                                         context.startActivity(intent)
                                     }
