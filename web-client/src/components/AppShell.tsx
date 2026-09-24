@@ -450,7 +450,7 @@ export default function AppShell() {
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-bold text-foreground">{userName}</div>
-            <div className="truncate text-xs font-medium text-foreground/60 mt-0.5">Premium Plan</div>
+            <div className="truncate text-xs font-medium text-foreground/60 mt-0.5">Standard Plan</div>
           </div>
         </div>
 

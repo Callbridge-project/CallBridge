@@ -762,7 +762,7 @@ function SetupModal({ onClose }: { onClose: () => void }) {
   ];
 
   const APK_DOWNLOAD_URL = 
-  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6aa381d8000c8aa8ea0e/download?project=69f0e3dc000b51d0cfad";
+  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6ab558f00003cc8a9f7b/download?project=69f0e3dc000b51d0cfad";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

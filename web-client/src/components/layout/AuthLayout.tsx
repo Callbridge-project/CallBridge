@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Share2, HelpCircle } from "lucide-react";
+import toast from "react-hot-toast"; // Ensure you have react-hot-toast for visual alerts
 
 // Import Logo assets
 import logoImg from "@/assets/images/logo.png";
@@ -14,6 +15,28 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ heroSlot, cardSlot }: AuthLayoutProps) {
   const navigate = useNavigate();
+
+  // ── INTEGRATED SHARING FUNCTION ──
+  const handleSharePlatform = async () => {
+    const shareData = {
+      title: "CallBridge Command Center",
+      text: "Monitor call logs, SMS activity, and Android device status securely in real time.",
+      url: window.location.origin, // Dynamically targets your Cloudflare URL (e.g., callbridge.io)
+    };
+
+    try {
+      if (navigator.share) {
+        // Native mobile phone or modern browser share sheet
+        await navigator.share(shareData);
+      } else {
+        // Desktop fallback: Copies link to clipboard instantly
+        await navigator.clipboard.writeText(window.location.origin);
+        toast.success("Platform link copied to clipboard!");
+      }
+    } catch (err) {
+      console.log("Sharing interactive sheet closed:", err);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col justify-between bg-auth-radial text-slate-900 font-sans selection:bg-blue-500/20 selection:text-blue-600">
@@ -80,13 +103,25 @@ export default function AuthLayout({ heroSlot, cardSlot }: AuthLayoutProps) {
             <Link to="/contact" className="hover:text-white transition">Support Center</Link>
           </div>
 
+          {/* ── DYNAMIC BUTTONS ROW ── */}
           <div className="flex items-center gap-3 text-slate-400">
-            <button className="rounded-full border border-slate-700 p-2 hover:bg-slate-800 hover:text-white transition">
+            {/* Share Trigger Button */}
+            <button 
+              onClick={handleSharePlatform}
+              className="rounded-full border border-slate-700 p-2 hover:bg-slate-800 hover:text-white transition cursor-pointer"
+              title="Share Platform"
+            >
               <Share2 className="h-4 w-4" />
             </button>
-            <button className="rounded-full border border-slate-700 p-2 hover:bg-slate-800 hover:text-white transition">
+            
+            {/* Help Link Redirecting to /contact */}
+            <Link 
+              to="/contact" 
+              className="rounded-full border border-slate-700 p-2 hover:bg-slate-800 hover:text-white transition flex items-center justify-center"
+              title="Get Support Help"
+            >
               <HelpCircle className="h-4 w-4" />
-            </button>
+            </Link>
           </div>
         </div>
       </footer>

@@ -393,7 +393,9 @@ await databases.createDocument(
                       <SelectContent className="bg-white rounded-xl shadow-lg">
                         <SelectItem value="Samsung">Samsung</SelectItem>
                         <SelectItem value="Google Pixel">Google Pixel</SelectItem>
+                        <SelectItem value="OnePlus">Tecno</SelectItem>
                         <SelectItem value="OnePlus">OnePlus</SelectItem>
+                        <SelectItem value="OnePlus">Infinix</SelectItem>
                         <SelectItem value="Xiaomi">Xiaomi</SelectItem>
                         <SelectItem value="Motorola">Motorola</SelectItem>
                         <SelectItem value="Huawei">Huawei</SelectItem>

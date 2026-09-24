@@ -1036,6 +1036,9 @@ function SetupModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
     }
   ];
 
+  const APK_DOWNLOAD_URL = 
+  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6ab558f00003cc8a9f7b/download?project=69f0e3dc000b51d0cfad";
+  
   return (
     <CustomModal
       isOpen={isOpen}
@@ -1100,17 +1103,20 @@ function SetupModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
 
           {/* Button to simulate APK download */}
           <div className="flex justify-center">
-            <Button
+            <a
+                 href={APK_DOWNLOAD_URL}
+                 download="callbridge-v1.0.apk"
+             className=" flex justify-center h-14 bg-btn-primary-gradient py-3.5 px-8 shadow-btn-primary hover:opacity-95 text-white rounded-full font-bold w-full transition uppercase tracking-wider text-xs"
               onClick={() => {
                 toast.success("Downloading CallBridge Android APK...");
                 setTimeout(() => {
                   toast.success("APK Download completed!");
-                }, 1500);
+                }, 4500);
               }}
-              className="h-12 bg-btn-primary-gradient shadow-btn-primary hover:opacity-95 text-white rounded-full font-bold w-full transition uppercase tracking-wider text-xs"
+             
             >
               Start Download
-            </Button>
+            </a>
           </div>
 
           {/* Styles for animations */}

@@ -29,7 +29,7 @@ import AuthLayout from "@/components/layout/AuthLayout";
 // Import Logo and Mockup assets
 import logoImg from "@/assets/images/logo.png";
 import footerLogoImg from "@/assets/images/footer-logo.png";
-import phoneMockupImg from "@/assets/images/CallBridge Android Mockup.png";
+import phoneMockupImg from "@/assets/phoneMockupImg.svg";
 
 export default function LoginPage() {
   const navigate = useNavigate();

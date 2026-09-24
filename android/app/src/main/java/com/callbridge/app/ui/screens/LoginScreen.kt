@@ -90,7 +90,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(340.dp)
+                .height(380.dp)
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
@@ -106,7 +106,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
             Image(
                 painter = painterResource(id = R.drawable.logo1),
                 contentDescription = "CallBridge Logo",
-                modifier = Modifier.size(340.dp)
+                modifier = Modifier.size(350.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -120,7 +120,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 .align(Alignment.BottomCenter)
                 .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .background(Color.White)
-                .padding(horizontal = 24.dp, vertical = 12.dp)
+                .padding(horizontal = 24.dp, vertical = 42.dp)
                 .verticalScroll(rememberScrollState())
         ) {
 
