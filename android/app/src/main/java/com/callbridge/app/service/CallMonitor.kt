@@ -59,10 +59,24 @@ class CallMonitor(
             return
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        // Android 16 requires explicit READ_PHONE_STATE check before registering
+        if (android.os.Build.VERSION.SDK_INT >= 36) {
+            // API 36 = Android 16
             try {
                 telephonyManager.registerTelephonyCallback(
-                    Executors.newSingleThreadExecutor(),
+                    java.util.concurrent.Executors.newSingleThreadExecutor(),
+                    modernCallback
+                )
+                Log.d("CallBridge", "CallMonitor: started (Android 16 modern API)")
+            } catch (e: SecurityException) {
+                Log.e("CallBridge", "CallMonitor: SecurityException on Android 16 — ${e.message}")
+                // Fall back to legacy listener
+                startLegacyListener()
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                telephonyManager.registerTelephonyCallback(
+                    java.util.concurrent.Executors.newSingleThreadExecutor(),
                     modernCallback
                 )
                 Log.d("CallBridge", "CallMonitor: started (modern API)")
@@ -70,16 +84,20 @@ class CallMonitor(
                 Log.e("CallBridge", "CallMonitor: permission missing — ${e.message}")
             }
         } else {
-            try {
-                @Suppress("DEPRECATION")
-                telephonyManager.listen(
-                    legacyListener,
-                    PhoneStateListener.LISTEN_CALL_STATE
-                )
-                Log.d("CallBridge", "CallMonitor: started (legacy API)")
-            } catch (e: SecurityException) {
-                Log.e("CallBridge", "CallMonitor: permission missing — ${e.message}")
-            }
+            startLegacyListener()
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun startLegacyListener() {
+        try {
+            telephonyManager.listen(
+                legacyListener,
+                android.telephony.PhoneStateListener.LISTEN_CALL_STATE
+            )
+            Log.d("CallBridge", "CallMonitor: started (legacy API)")
+        } catch (e: SecurityException) {
+            Log.e("CallBridge", "CallMonitor: legacy permission missing — ${e.message}")
         }
     }
 

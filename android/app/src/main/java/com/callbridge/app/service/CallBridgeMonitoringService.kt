@@ -23,13 +23,10 @@ import kotlinx.coroutines.launch
 
 class CallBridgeMonitoringService : Service() {
 
-    // CallMonitor only exists on Android 12 and above
     private var callMonitor: CallMonitor? = null
-
     private var smsObserver: SmsObserver? = null
 
     override fun onCreate() {
-        // Create the notification channel the first time the service starts
         super.onCreate()
         Log.d("CallBridge", "ForegroundService: created")
         NotificationHelper.createNotificationChannel(this)
@@ -39,58 +36,62 @@ class CallBridgeMonitoringService : Service() {
         Log.d("CallBridge", "ForegroundService: started")
         val notification = buildNotification()
 
-        // Pass the service type on Android 10 and above
+        // ── FIX 2: Combine Phone Call and Remote Messaging types to satisfy Android 16 security constraints ──
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val serviceTypes = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                // Combined flags are required on Android 14, 15, and 16+
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
+            } else {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+            }
+
             startForeground(
                 NotificationHelper.NOTIFICATION_ID,
                 notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+                serviceTypes
             )
         } else {
             startForeground(NotificationHelper.NOTIFICATION_ID, notification)
         }
 
-        // Start call monitoring on both Android 12+ and Android 11 - 8
         // Get the stored userId from SharedPreferences
         val prefs = getSharedPreferences("callbridge_prefs", MODE_PRIVATE)
         val userId = prefs.getString("current_user_id", "") ?: ""
         Log.d("CallBridge", "ForegroundService: userId = '$userId'")
 
-// Pass userId into CallMonitor
+        // Initialize Call Tracking Layer
         callMonitor = CallMonitor(this, userId)
         callMonitor?.startListening()
 
-        // Start SMS observation — handles both received read status
-        // and sent SMS detection simultaneously
+        // Initialize SMS Observation Layer
         smsObserver = SmsObserver(this, userId)
         smsObserver?.startObserving()
 
-        // Register or update device in Appwrite
+        // ── FIX 3: Consolidated Coroutine Sync Scope ──
         CoroutineScope(Dispatchers.IO).launch {
             if (userId.isNotEmpty()) {
+                // Register hardware metadata to Appwrite Console
                 DeviceRegistrationService.registerOrUpdateDevice(
                     this@CallBridgeMonitoringService, userId
                 )
+
+                // Dispatch background health log metrics
                 ActivityLogService.logActivity(
                     context = this@CallBridgeMonitoringService,
                     userId = userId,
                     activityType = ActivityLogService.TYPE_MONITORING_STARTED,
-                    message = "Monitoring started on ${Build.MANUFACTURER} ${Build.MODEL}"
+                    message = "Monitoring active on ${Build.MANUFACTURER} ${Build.MODEL}"
                 )
                 ActivityLogService.logActivity(
                     context = this@CallBridgeMonitoringService,
                     userId = userId,
                     activityType = ActivityLogService.TYPE_DEVICE_CONNECTED,
-                    message = "${Build.MANUFACTURER} ${Build.MODEL} connected to dashboard"
+                    message = "${Build.MANUFACTURER} ${Build.MODEL} bound to control center"
                 )
                 ActivityLogService.cleanupOldLogs(this@CallBridgeMonitoringService, userId)
             }
-            AppwriteSyncService.syncPendingCallLogs(this@CallBridgeMonitoringService)
-            AppwriteSyncService.syncPendingSmsLogs(this@CallBridgeMonitoringService)
-        }
 
-        // Sync any events that were saved while offline
-        CoroutineScope(Dispatchers.IO).launch {
+            // Push any stored offline data cache up to Appwrite
             AppwriteSyncService.syncPendingCallLogs(this@CallBridgeMonitoringService)
             AppwriteSyncService.syncPendingSmsLogs(this@CallBridgeMonitoringService)
         }
@@ -111,18 +112,16 @@ class CallBridgeMonitoringService : Service() {
                     context = this@CallBridgeMonitoringService,
                     userId = userId,
                     activityType = ActivityLogService.TYPE_MONITORING_STOPPED,
-                    message = "Monitoring stopped on ${Build.MANUFACTURER} ${Build.MODEL}"
+                    message = "Monitoring terminated on ${Build.MANUFACTURER} ${Build.MODEL}"
                 )
             }
         }
         Log.d("CallBridge", "ForegroundService: destroyed")
     }
 
-    // We do not need binding — this service runs independently
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun buildNotification(): Notification {
-        // Tapping the notification opens the app
         val openAppIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -134,11 +133,11 @@ class CallBridgeMonitoringService : Service() {
 
         return NotificationCompat.Builder(this, NotificationHelper.CHANNEL_ID)
             .setContentTitle("CallBridge is active")
-            .setContentText("Monitoring calls and SMS in the background")
+            .setContentText("Monitoring telemetry logs in background context")
             .setSmallIcon(R.drawable.ic_dialog_info)
             .setContentIntent(pendingIntent)
-            .setOngoing(true) // makes it non-dismissable by swipe
-            .setSilent(true) // no sound when notification appears
+            .setOngoing(true)
+            .setSilent(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }

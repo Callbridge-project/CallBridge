@@ -73,6 +73,15 @@ object PermissionManager {
             }
         }
 
+        if (Build.VERSION.SDK_INT >= 36) {
+            if (ContextCompat.checkSelfPermission(
+                    context, "android.permission.READ_BASIC_PHONE_STATE"
+                ) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add("android.permission.READ_BASIC_PHONE_STATE")
+            }
+        }
+
+
         return permissions.toTypedArray()
     }
 }

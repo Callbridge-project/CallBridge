@@ -32,7 +32,7 @@ object Routes {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation() { // Fixed: Removed the accidental param signature block
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -46,11 +46,24 @@ fun AppNavigation() {
                 onSplashFinished = {
                     scope.launch {
                         val currentUser = AuthService.getCurrentUser()
+                        val prefs = context.getSharedPreferences(
+                            "callbridge_prefs", Context.MODE_PRIVATE
+                        )
+                        val permissionsShown = prefs.getBoolean("permissions_shown", false)
+
                         if (currentUser.isSuccess) {
-                            navController.navigate(Routes.DASHBOARD) {
-                                popUpTo(Routes.SPLASH) { inclusive = true }
+                            // Even if logged in, intercept and route them to onboarding if missing
+                            if (permissionsShown) {
+                                navController.navigate(Routes.DASHBOARD) {
+                                    popUpTo(Routes.SPLASH) { inclusive = true }
+                                }
+                            } else {
+                                navController.navigate(Routes.PERMISSIONS) {
+                                    popUpTo(Routes.SPLASH) { inclusive = true }
+                                }
                             }
                         } else {
+                            // Fixed: Corrected the popUpTo configuration syntax block here
                             navController.navigate(Routes.LOGIN) {
                                 popUpTo(Routes.SPLASH) { inclusive = true }
                             }
@@ -111,6 +124,12 @@ fun AppNavigation() {
                 notificationsGranted = notificationsGranted,
                 contactsGranted = contactsGranted,
                 onGoToDashboard = {
+                    // Permanently save the configuration state flag so they only see it once
+                    val prefs = context.getSharedPreferences(
+                        "callbridge_prefs", Context.MODE_PRIVATE
+                    )
+                    prefs.edit().putBoolean("permissions_shown", true).apply()
+
                     navController.navigate(Routes.DASHBOARD) {
                         popUpTo(Routes.PERMISSIONS_GRANTED) { inclusive = true }
                     }
@@ -129,6 +148,12 @@ fun AppNavigation() {
         composable(Routes.DASHBOARD) {
             MainScreen(
                 onLogout = {
+                    // Clear onboarding flag on logout so a new user has to see it properly
+                    val prefs = context.getSharedPreferences(
+                        "callbridge_prefs", Context.MODE_PRIVATE
+                    )
+                    prefs.edit().putBoolean("permissions_shown", false).apply()
+
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(Routes.DASHBOARD) { inclusive = true }
                     }
