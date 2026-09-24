@@ -1056,7 +1056,7 @@ function SetupModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
           <div className="text-center space-y-4">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-primary border border-blue-100 shadow-sm shadow-blue-500/5">
               <Download className="h-6 w-6" />
-            </div>
+            </div >
             <h3 className="text-2xl font-bold tracking-tight text-slate-950">
               Download the App. <br />
               Start Monitoring Today.
