@@ -642,7 +642,7 @@ export default function DashboardPage() {
                 <img src={dashcall} alt="dash call" className="h-5 w-5" />
                 
               </div>
-              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-primary border border-blue-100">+12%</span>
+              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-primary border border-blue-100">+6.5%</span>
             </div>
             <div className="mt-auto">
               <p className="text-xs font-medium text-muted-foreground">Total Calls</p>
@@ -1037,7 +1037,7 @@ function SetupModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
   ];
 
   const APK_DOWNLOAD_URL = 
-  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6ab558f00003cc8a9f7b/download?project=69f0e3dc000b51d0cfad";
+  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6ab6b27d001866493e08/download?project=69f0e3dc000b51d0cfad";
   
   return (
     <CustomModal

@@ -110,7 +110,7 @@ const faqItems = [
 ];
 
 const APK_DOWNLOAD_URL = 
-  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6ab558f00003cc8a9f7b/download?project=69f0e3dc000b51d0cfad";
+  "https://fra.cloud.appwrite.io/v1/storage/buckets/6a8f1255002dcaf4c6b3/files/6ab6b27d001866493e08/download?project=69f0e3dc000b51d0cfad";
   
 export default function LandingPage() {
   const [isMounted, setIsMounted] = useState(false);

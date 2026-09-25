@@ -404,7 +404,7 @@ fun TermsAndPrivacyScreen(onBack: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Last Updated: October 24, 2024",
+                        text = "Last Updated: August 24, 2026",
                         fontSize = 12.sp,
                         color = mutedText
                     )
@@ -430,7 +430,7 @@ fun TermsAndPrivacyScreen(onBack: () -> Unit) {
                             color = nearBlack
                         )
                         Text(
-                            text = "© 2024 CallBridge Platform. All rights reserved.",
+                            text = "© 2026 CallBridge Platform. All rights reserved.",
                             fontSize = 11.sp,
                             color = mutedText
                         )

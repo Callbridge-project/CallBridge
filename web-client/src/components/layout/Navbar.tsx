@@ -25,7 +25,9 @@ export default function Navbar() {
     { name: "Features", path: "/" },
     { name: "Dashboard Preview", path: "/dashboard-preview" },
     { name: "Android", path: "/android" },
-    { name: "Contact", path: "/contact" }
+    { name: "Contact", path: "/contact" },
+    { name: "Register", path: "/register" },
+    { name: "Login", path: "/login" }
   ];
 
   const isLinkActive = (path: string) => {

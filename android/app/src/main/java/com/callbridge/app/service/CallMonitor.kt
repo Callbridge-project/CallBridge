@@ -1,244 +1,606 @@
 package com.callbridge.app.service
 
 import android.content.Context
-import android.os.Build
+import android.database.ContentObserver
+import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.CallLog
-import android.telephony.PhoneStateListener
-import android.telephony.TelephonyCallback
-import android.telephony.TelephonyManager
 import android.util.Log
-import androidx.annotation.RequiresApi
-import com.callbridge.app.utils.ContactResolver
-import com.callbridge.app.utils.PermissionManager
+
 import com.callbridge.app.data.local.CallLogRepository
 import com.callbridge.app.data.remote.AppwriteSyncService
+import com.callbridge.app.utils.ContactResolver
+import com.callbridge.app.utils.PermissionManager
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
 import java.time.Instant
-import java.util.concurrent.Executors
 
 class CallMonitor(
     private val context: Context,
     private val userId: String
 ) {
 
-    private val telephonyManager =
-        context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+    companion object {
+        private const val TAG = "CallBridge"
+
+        /*
+         * We keep the last processed Android Call Log ID so that
+         * the same call is not inserted into Room more than once.
+         */
+        private const val PREFS_NAME = "callbridge_call_monitor"
+
+        /*
+         * Small delay gives the Android Call Log provider time
+         * to finish writing the new call entry before we query it.
+         */
+        private const val PROCESS_DELAY_MS = 700L
+    }
 
     private val repository = CallLogRepository(context)
-    private val scope = CoroutineScope(Dispatchers.IO)
 
-    private var lastState = TelephonyManager.CALL_STATE_IDLE
-    private var callStartTime: Long = 0L
-    private var lastIncomingNumber: String = ""
+    private val scope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // ── Modern API (Android 12+) ──────────────────────────────────
-    @RequiresApi(Build.VERSION_CODES.S)
-    private val modernCallback = object : TelephonyCallback(),
-        TelephonyCallback.CallStateListener {
-        override fun onCallStateChanged(state: Int) {
-            handleCallStateChange(state, null)
+    /*
+     * Android can send multiple ContentObserver callbacks for
+     * one call-log change.
+     *
+     * Mutex guarantees that only one processing operation runs
+     * at a time.
+     */
+    private val processingMutex = Mutex()
+
+    private val preferences =
+        context.getSharedPreferences(
+            PREFS_NAME,
+            Context.MODE_PRIVATE
+        )
+
+    private val lastProcessedKey =
+        "last_processed_call_id_$userId"
+
+    private val baselineKey =
+        "baseline_initialized_$userId"
+
+    private var lastProcessedCallId: Long =
+        preferences.getLong(
+            lastProcessedKey,
+            -1L
+        )
+
+    private var isStarted = false
+
+    private val observerHandler =
+        Handler(Looper.getMainLooper())
+
+    /**
+     * Watches Android's system Call Log.
+     */
+    private val callLogObserver =
+        object : ContentObserver(observerHandler) {
+
+            override fun onChange(
+                selfChange: Boolean,
+                uri: Uri?
+            ) {
+
+                super.onChange(selfChange, uri)
+
+                Log.d(
+                    TAG,
+                    "CallMonitor: Call Log changed -> $uri"
+                )
+
+                scope.launch {
+                    processNewCallLogs()
+                }
+            }
         }
-    }
 
-    // ── Legacy API (Android 8 to 11) ─────────────────────────────
-    @Suppress("DEPRECATION")
-    private val legacyListener = object : PhoneStateListener() {
-        @Deprecated("Deprecated in Java")
-        override fun onCallStateChanged(state: Int, phoneNumber: String?) {
-            handleCallStateChange(state, phoneNumber)
-        }
-    }
-
-    // ── Start listening — picks the right API automatically ───────
+    /**
+     * Start monitoring the Android Call Log.
+     */
     fun startListening() {
-        if (!PermissionManager.hasCallPermissions(context)) {
-            Log.e("CallBridge", "CallMonitor: READ_PHONE_STATE not granted — cannot start")
+
+        if (isStarted) {
+            Log.d(
+                TAG,
+                "CallMonitor: already running"
+            )
             return
         }
 
-        // Android 16 requires explicit READ_PHONE_STATE check before registering
-        if (android.os.Build.VERSION.SDK_INT >= 36) {
-            // API 36 = Android 16
-            try {
-                telephonyManager.registerTelephonyCallback(
-                    java.util.concurrent.Executors.newSingleThreadExecutor(),
-                    modernCallback
-                )
-                Log.d("CallBridge", "CallMonitor: started (Android 16 modern API)")
-            } catch (e: SecurityException) {
-                Log.e("CallBridge", "CallMonitor: SecurityException on Android 16 — ${e.message}")
-                // Fall back to legacy listener
-                startLegacyListener()
-            }
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            try {
-                telephonyManager.registerTelephonyCallback(
-                    java.util.concurrent.Executors.newSingleThreadExecutor(),
-                    modernCallback
-                )
-                Log.d("CallBridge", "CallMonitor: started (modern API)")
-            } catch (e: SecurityException) {
-                Log.e("CallBridge", "CallMonitor: permission missing — ${e.message}")
-            }
-        } else {
-            startLegacyListener()
-        }
-    }
+        /*
+         * Call Log access is required because this implementation
+         * reads completed call records from Android.
+         */
+        if (!PermissionManager.hasCallPermissions(context)) {
 
-    @Suppress("DEPRECATION")
-    private fun startLegacyListener() {
-        try {
-            telephonyManager.listen(
-                legacyListener,
-                android.telephony.PhoneStateListener.LISTEN_CALL_STATE
+            Log.e(
+                TAG,
+                "CallMonitor: READ_PHONE_STATE / READ_CALL_LOG permission missing"
             )
-            Log.d("CallBridge", "CallMonitor: started (legacy API)")
-        } catch (e: SecurityException) {
-            Log.e("CallBridge", "CallMonitor: legacy permission missing — ${e.message}")
-        }
-    }
 
-    // ── Stop listening — cleans up whichever API was used ─────────
-    fun stopListening() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            try {
-                telephonyManager.unregisterTelephonyCallback(modernCallback)
-                Log.d("CallBridge", "CallMonitor: stopped (modern API)")
-            } catch (e: Exception) {
-                Log.e("CallBridge", "CallMonitor: error stopping — ${e.message}")
-            }
-        } else {
-            try {
-                @Suppress("DEPRECATION")
-                telephonyManager.listen(
-                    legacyListener,
-                    PhoneStateListener.LISTEN_NONE
+            return
+        }
+
+        /*
+         * IMPORTANT:
+         *
+         * On first installation for this user, establish a baseline.
+         *
+         * Otherwise, the first time CallBridge starts it could upload
+         * old calls that were already present on the phone before
+         * CallBridge started monitoring.
+         */
+        if (!preferences.getBoolean(baselineKey, false)) {
+
+            val latestCallId = getLatestCallId()
+
+            lastProcessedCallId =
+                latestCallId ?: -1L
+
+            preferences.edit()
+                .putLong(
+                    lastProcessedKey,
+                    lastProcessedCallId
                 )
-                Log.d("CallBridge", "CallMonitor: stopped (legacy API)")
-            } catch (e: Exception) {
-                Log.e("CallBridge", "CallMonitor: error stopping — ${e.message}")
-            }
+                .putBoolean(
+                    baselineKey,
+                    true
+                )
+                .apply()
+
+            Log.d(
+                TAG,
+                "CallMonitor: baseline initialized at call ID $lastProcessedCallId"
+            )
+        }
+
+        try {
+
+            context.contentResolver.registerContentObserver(
+                CallLog.Calls.CONTENT_URI,
+                true,
+                callLogObserver
+            )
+
+            isStarted = true
+
+            Log.d(
+                TAG,
+                "CallMonitor: started successfully"
+            )
+
+            Log.d(
+                TAG,
+                "CallMonitor: monitoring Android Call Log"
+            )
+
+            Log.d(
+                TAG,
+                "CallMonitor: userId=$userId"
+            )
+
+        } catch (e: SecurityException) {
+
+            Log.e(
+                TAG,
+                "CallMonitor: SecurityException registering Call Log observer — ${e.message}",
+                e
+            )
+
+        } catch (e: Exception) {
+
+            Log.e(
+                TAG,
+                "CallMonitor: failed to start — ${e.message}",
+                e
+            )
         }
     }
 
-    // ── Read the most recent number from the system call log ──────
-    // Used on Android 12+ where TelephonyCallback no longer provides
-    // the phone number directly for privacy reasons
-    private fun getLastCallNumber(): String {
-        if (!PermissionManager.hasCallPermissions(context)) return ""
+    /**
+     * Stop monitoring the Call Log.
+     */
+    fun stopListening() {
+
+        if (!isStarted) {
+            return
+        }
+
+        try {
+
+            context.contentResolver.unregisterContentObserver(
+                callLogObserver
+            )
+
+            isStarted = false
+
+            Log.d(
+                TAG,
+                "CallMonitor: stopped successfully"
+            )
+
+        } catch (e: Exception) {
+
+            Log.e(
+                TAG,
+                "CallMonitor: error stopping observer — ${e.message}",
+                e
+            )
+        }
+    }
+
+    /**
+     * Gets the most recent Call Log ID.
+     *
+     * This is used only to establish the initial baseline.
+     */
+    private fun getLatestCallId(): Long? {
+
+        if (!PermissionManager.hasCallPermissions(context)) {
+            return null
+        }
 
         return try {
+
+            val uri = CallLog.Calls.CONTENT_URI
+                .buildUpon()
+                .appendQueryParameter(
+                    CallLog.Calls.LIMIT_PARAM_KEY,
+                    "1"
+                )
+                .build()
+
             val cursor = context.contentResolver.query(
-                CallLog.Calls.CONTENT_URI,
-                arrayOf(CallLog.Calls.NUMBER),
+                uri,
+                arrayOf(
+                    CallLog.Calls._ID
+                ),
                 null,
                 null,
-                "${CallLog.Calls.DATE} DESC"
+                "${CallLog.Calls._ID} DESC"
             )
 
             cursor?.use {
+
                 if (it.moveToFirst()) {
-                    it.getString(
-                        it.getColumnIndexOrThrow(CallLog.Calls.NUMBER)
-                    ) ?: ""
-                } else ""
-            } ?: ""
+
+                    it.getLong(
+                        it.getColumnIndexOrThrow(
+                            CallLog.Calls._ID
+                        )
+                    )
+
+                } else {
+                    null
+                }
+            }
+
         } catch (e: Exception) {
-            Log.e("CallBridge", "CallMonitor: error reading call log — ${e.message}")
-            ""
+
+            Log.e(
+                TAG,
+                "CallMonitor: error getting latest call ID — ${e.message}",
+                e
+            )
+
+            null
         }
     }
 
-    // ── Shared detection logic — same for both APIs ───────────────
-    private fun handleCallStateChange(state: Int, phoneNumber: String?) {
-        when (state) {
+    /**
+     * Finds and processes new Call Log records.
+     */
+    private suspend fun processNewCallLogs() {
 
-            TelephonyManager.CALL_STATE_RINGING -> {
-                callStartTime = System.currentTimeMillis()
+        processingMutex.withLock {
 
-                // On Android 8-11 the number comes directly from the callback
-                // On Android 12+ phoneNumber is null here so we read call log later
-                lastIncomingNumber = phoneNumber ?: ""
+            try {
 
-                Log.d("CallBridge", "CallMonitor: Incoming call ringing from $lastIncomingNumber")
-            }
+                /*
+                 * Give Android a moment to finish writing
+                 * the call record.
+                 */
+                delay(PROCESS_DELAY_MS)
 
-            TelephonyManager.CALL_STATE_OFFHOOK -> {
-                if (lastState == TelephonyManager.CALL_STATE_RINGING) {
-                    scope.launch {
-                        // Wait 1 second for the system call log to update
-                        // before reading the number from it
-                        delay(1000)
+                if (!PermissionManager.hasCallPermissions(context)) {
 
-                        val phoneNum = if (lastIncomingNumber.isNotEmpty()) {
-                            lastIncomingNumber
-                        } else {
-                            getLastCallNumber()
-                        }
+                    Log.e(
+                        TAG,
+                        "CallMonitor: permissions lost while processing"
+                    )
 
-                        val contactName = ContactResolver.getContactName(context, phoneNum)
-
-                        Log.d("CallBridge", "CallMonitor: Call ANSWERED from $phoneNum")
-                        Log.d("CallBridge", "CallMonitor: contact resolved as '${contactName ?: "Unknown"}'")
-
-                        repository.saveCallLog(
-                            userId = userId,
-                            phoneNumber = phoneNum,
-                            contactName = contactName,
-                            logType = "incoming_call",
-                            timestamp = Instant.now().toString()
-                        )
-
-                        Log.d("CallBridge", "CallMonitor: answered call saved to Room")
-
-                        // Sync to Appwrite immediately after saving locally
-                        AppwriteSyncService.syncPendingCallLogs(context)
-                    }
-                }
-            }
-
-            TelephonyManager.CALL_STATE_IDLE -> {
-                if (lastState == TelephonyManager.CALL_STATE_RINGING) {
-                    scope.launch {
-                        // Wait 1 second for the system call log to update
-                        // before reading the number from it
-                        delay(1000)
-
-                        val phoneNum = if (lastIncomingNumber.isNotEmpty()) {
-                            lastIncomingNumber
-                        } else {
-                            getLastCallNumber()
-                        }
-
-                        val contactName = ContactResolver.getContactName(context, phoneNum)
-
-                        Log.d("CallBridge", "CallMonitor: Call MISSED from $phoneNum")
-                        Log.d("CallBridge", "CallMonitor: contact resolved as '${contactName ?: "Unknown"}'")
-
-
-                        repository.saveCallLog(
-                            userId = userId,
-                            phoneNumber = phoneNum,
-                            contactName = contactName,
-                            logType = "missed_call",
-                            timestamp = Instant.now().toString()
-                        )
-
-                        Log.d("CallBridge", "CallMonitor: missed call saved to Room")
-
-                        // Sync to Appwrite immediately after saving locally
-                        AppwriteSyncService.syncPendingCallLogs(context)
-                    }
+                    return
                 }
 
-                callStartTime = 0L
-                lastIncomingNumber = ""
+                /*
+                 * Fetch calls newer than our last processed ID.
+                 *
+                 * We use the provider's LIMIT parameter rather than
+                 * putting LIMIT directly into the SQL sort expression.
+                 */
+                val uri = CallLog.Calls.CONTENT_URI
+                    .buildUpon()
+                    .appendQueryParameter(
+                        CallLog.Calls.LIMIT_PARAM_KEY,
+                        "20"
+                    )
+                    .build()
+
+                val cursor = context.contentResolver.query(
+                    uri,
+                    arrayOf(
+                        CallLog.Calls._ID,
+                        CallLog.Calls.NUMBER,
+                        CallLog.Calls.TYPE,
+                        CallLog.Calls.DATE,
+                        CallLog.Calls.DURATION,
+                        CallLog.Calls.PHONE_ACCOUNT_ID,
+                        CallLog.Calls.PHONE_ACCOUNT_COMPONENT_NAME
+                    ),
+                    "${CallLog.Calls._ID} > ?",
+                    arrayOf(
+                        lastProcessedCallId.toString()
+                    ),
+                    "${CallLog.Calls._ID} ASC"
+                )
+
+                cursor?.use {
+
+                    if (!it.moveToFirst()) {
+
+                        Log.d(
+                            TAG,
+                            "CallMonitor: no new calls found"
+                        )
+
+                        return
+                    }
+
+                    do {
+
+                        val callId =
+                            it.getLong(
+                                it.getColumnIndexOrThrow(
+                                    CallLog.Calls._ID
+                                )
+                            )
+
+                        val number =
+                            it.getString(
+                                it.getColumnIndexOrThrow(
+                                    CallLog.Calls.NUMBER
+                                )
+                            ) ?: ""
+
+                        val type =
+                            it.getInt(
+                                it.getColumnIndexOrThrow(
+                                    CallLog.Calls.TYPE
+                                )
+                            )
+
+                        val dateMillis =
+                            it.getLong(
+                                it.getColumnIndexOrThrow(
+                                    CallLog.Calls.DATE
+                                )
+                            )
+
+                        val duration =
+                            it.getLong(
+                                it.getColumnIndexOrThrow(
+                                    CallLog.Calls.DURATION
+                                )
+                            )
+
+                        val phoneAccountId =
+                            try {
+                                it.getString(
+                                    it.getColumnIndexOrThrow(
+                                        CallLog.Calls.PHONE_ACCOUNT_ID
+                                    )
+                                )
+                            } catch (_: Exception) {
+                                null
+                            }
+
+                        val phoneAccountComponent =
+                            try {
+                                it.getString(
+                                    it.getColumnIndexOrThrow(
+                                        CallLog.Calls.PHONE_ACCOUNT_COMPONENT_NAME
+                                    )
+                                )
+                            } catch (_: Exception) {
+                                null
+                            }
+
+                        Log.d(
+                            TAG,
+                            "CallMonitor: new Call Log ID=$callId"
+                        )
+
+                        Log.d(
+                            TAG,
+                            "CallMonitor: number=$number"
+                        )
+
+                        Log.d(
+                            TAG,
+                            "CallMonitor: type=$type"
+                        )
+
+                        Log.d(
+                            TAG,
+                            "CallMonitor: duration=${duration}s"
+                        )
+
+                        Log.d(
+                            TAG,
+                            "CallMonitor: phoneAccountId=$phoneAccountId"
+                        )
+
+                        Log.d(
+                            TAG,
+                            "CallMonitor: phoneAccountComponent=$phoneAccountComponent"
+                        )
+
+                        /*
+                         * Convert Android call type into the
+                         * CallBridge database value.
+                         */
+                        val logType = when (type) {
+
+                            CallLog.Calls.INCOMING_TYPE -> {
+                                "incoming_call"
+                            }
+
+                            CallLog.Calls.MISSED_TYPE -> {
+                                "missed_call"
+                            }
+
+                            CallLog.Calls.OUTGOING_TYPE -> {
+                                "outgoing_call"
+                            }
+
+                            else -> {
+
+                                Log.d(
+                                    TAG,
+                                    "CallMonitor: unsupported Call Log type $type — skipping"
+                                )
+
+                                /*
+                                 * We still advance the processed ID
+                                 * because this is not a call type that
+                                 * CallBridge currently stores.
+                                 */
+                                lastProcessedCallId = callId
+
+                                preferences.edit()
+                                    .putLong(
+                                        lastProcessedKey,
+                                        lastProcessedCallId
+                                    )
+                                    .apply()
+
+                                continue
+                            }
+                        }
+
+                        val timestamp =
+                            try {
+                                Instant
+                                    .ofEpochMilli(dateMillis)
+                                    .toString()
+                            } catch (_: Exception) {
+                                Instant.now().toString()
+                            }
+
+                        val contactName =
+                            if (number.isNotBlank()) {
+                                try {
+                                    ContactResolver.getContactName(
+                                        context,
+                                        number
+                                    )
+                                } catch (e: Exception) {
+
+                                    Log.e(
+                                        TAG,
+                                        "CallMonitor: contact lookup failed — ${e.message}"
+                                    )
+
+                                    null
+                                }
+                            } else {
+                                null
+                            }
+
+                        Log.d(
+                            TAG,
+                            "CallMonitor: detected $logType"
+                        )
+
+                        Log.d(
+                            TAG,
+                            "CallMonitor: contact=${contactName ?: "Unknown"}"
+                        )
+
+                        /*
+                         * Save locally first.
+                         *
+                         * This keeps Room as the local source of truth
+                         * if internet/Appwrite is temporarily unavailable.
+                         */
+                        repository.saveCallLog(
+                            userId = userId,
+                            phoneNumber = number,
+                            contactName = contactName,
+                            logType = logType,
+                            timestamp = timestamp
+                        )
+
+                        Log.d(
+                            TAG,
+                            "CallMonitor: $logType saved to Room"
+                        )
+
+                        /*
+                         * Immediately attempt synchronization.
+                         */
+                        AppwriteSyncService.syncPendingCallLogs(
+                            context
+                        )
+
+                        Log.d(
+                            TAG,
+                            "CallMonitor: sync requested"
+                        )
+
+                        /*
+                         * Only mark this Call Log ID as processed
+                         * after it has successfully been saved locally.
+                         */
+                        lastProcessedCallId = callId
+
+                        preferences.edit()
+                            .putLong(
+                                lastProcessedKey,
+                                lastProcessedCallId
+                            )
+                            .apply()
+
+                    } while (it.moveToNext())
+                }
+
+            } catch (e: SecurityException) {
+
+                Log.e(
+                    TAG,
+                    "CallMonitor: SecurityException reading Call Log — ${e.message}",
+                    e
+                )
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    TAG,
+                    "CallMonitor: error processing Call Log — ${e.message}",
+                    e
+                )
             }
         }
-
-        lastState = state
     }
 }
